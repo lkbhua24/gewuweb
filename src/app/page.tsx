@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useRef, useState, useCallback } from "react";
+import { cn } from "@/lib/utils";
 
 // 打字机效果 Hook
 function useTypewriter(words: string[], typeSpeed = 80, deleteSpeed = 40, pauseTime = 2000) {
@@ -253,34 +254,31 @@ function SearchBox() {
       style={{ maxWidth: "min(680px, 90vw)" }}
     >
       <div
-        className={`
-          relative flex items-center h-16 rounded-2xl
-          transition-all duration-300 ease
-          ${isFocused 
-            ? "border-[#00D9FF] shadow-[0_0_60px_rgba(0,217,255,0.15)]" 
-            : "border-[rgba(0,217,255,0.3)] shadow-[0_0_40px_rgba(0,217,255,0.05)]"
-          }
-        `}
+        className={cn(
+          "relative flex items-center h-16 rounded-2xl",
+          "transition-all duration-300 ease",
+          isFocused 
+            ? "border-brand shadow-[0_0_60px_var(--primary-glow-sm)]" 
+            : "border-brand/30 shadow-[0_0_40px_var(--primary-glow-xs)]"
+        )}
         style={{
-          background: "rgba(17, 24, 39, 0.8)",
+          background: "rgba(15, 23, 42, 0.8)",
           borderWidth: "1px",
           borderStyle: "solid",
+          borderColor: isFocused ? undefined : "rgba(255, 255, 255, 0.06)",
         }}
       >
-        {/* 左侧 / 符号 */}
-        <span className="pl-6 pr-3 font-data text-[#00D9FF] text-lg">/</span>
+        <span className="pl-6 pr-3 font-data text-brand text-lg">/</span>
         
-        {/* 输入框 */}
         <input
           type="text"
-          className="flex-1 bg-transparent border-0 text-[#F9FAFB] text-lg placeholder:text-[#6B7280] focus:outline-none"
+          className="flex-1 bg-transparent border-0 text-primary-level text-lg placeholder:text-disabled-level focus:outline-none"
           placeholder={placeholderText}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
         />
         
-        {/* 搜索按钮 */}
-        <Button className="mr-2 h-12 px-6 bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-[#0B0F19] font-semibold rounded-xl transition-all duration-300 hover:shadow-[0_0_20px_rgba(0,217,255,0.4)]">
+        <Button className="mr-2 h-12 px-6 bg-brand hover:bg-brand/90 text-background font-semibold rounded-xl transition-all duration-300 hover:shadow-[0_0_20px_var(--primary-glow-md)]">
           搜索
         </Button>
       </div>
@@ -314,15 +312,11 @@ function DataBadges() {
       {badges.map((badge, index) => (
         <div
           key={index}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full"
-          style={{
-            background: "rgba(17, 24, 39, 0.6)",
-            backdropFilter: "blur(20px)",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-          }}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-surface-card border border-white/[0.06]"
+          style={{ backdropFilter: "blur(20px)" }}
         >
-          <span className="text-sm text-[#9CA3AF]">{badge.text}</span>
-          <span className="text-sm text-[#F9FAFB] font-data font-semibold">
+          <span className="text-sm text-tertiary-level">{badge.text}</span>
+          <span className="text-sm text-primary-level font-data font-semibold">
             {badge.prefix}
             {badge.isDecimal ? (
               <>
@@ -333,7 +327,7 @@ function DataBadges() {
               <AnimatedNumber value={badge.value} suffix={badge.suffix} />
             )}
           </span>
-          {badge.unit && <span className="text-sm text-[#9CA3AF]">{badge.unit}</span>}
+          {badge.unit && <span className="text-sm text-tertiary-level">{badge.unit}</span>}
         </div>
       ))}
     </motion.div>
@@ -453,9 +447,9 @@ function ProcessCard({ step, index }: { step: typeof processSteps[0]; index: num
         className="relative h-full rounded-2xl overflow-hidden transition-all duration-300"
         style={{
           padding: "32px 24px",
-          background: "rgba(17, 24, 39, 0.6)",
+          background: "rgba(15, 23, 42, 0.6)",
           backdropFilter: "blur(20px)",
-          border: "1px solid rgba(255, 255, 255, 0.08)",
+          border: "1px solid rgba(255, 255, 255, 0.06)",
           transform: isHovered ? "translateY(-8px)" : "translateY(0)",
         }}
       >
@@ -627,8 +621,8 @@ function TrustBadges() {
                 }}
                 className="group flex items-center gap-3 px-6 py-3 rounded-xl cursor-default transition-all duration-300 hover:border-[#00D9FF]/50 hover:shadow-[0_0_20px_rgba(0,217,255,0.1)]"
                 style={{
-                  background: "#1F2937",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  background: "rgba(15, 23, 42, 0.6)",
+                  border: "1px solid rgba(255, 255, 255, 0.06)",
                 }}
               >
                 <Icon className="size-5 text-[#00D9FF]" strokeWidth={1.5} />
@@ -682,11 +676,11 @@ const hotPhones = [
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-[#0B0F19] relative overflow-hidden">
+    <div className="min-h-screen bg-background relative overflow-x-hidden">
       {/* Background Effects */}
       <ParticleGrid />
-      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-[#00D9FF]/10 rounded-full blur-[150px] pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-[#A855F7]/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-brand/10 rounded-full blur-[150px] pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[120px] pointer-events-none" />
 
       {/* Hero Section - 负 margin 抵消 main 的 pt-16，实现真正的全屏效果 */}
       <section
@@ -712,7 +706,7 @@ export default function HomePage() {
                 duration: 0.8,
                 ease: [0.16, 1, 0.3, 1],
               }}
-              className="text-[#F9FAFB] font-bold tracking-tight"
+              className="text-primary-level font-bold tracking-tight"
               style={{ fontSize: "clamp(64px, 10vw, 120px)", lineHeight: 1 }}
             >
               极物
@@ -727,7 +721,7 @@ export default function HomePage() {
                 duration: 0.8,
                 ease: [0.16, 1, 0.3, 1],
               }}
-              className="text-[#9CA3AF] mt-4 mb-10"
+              className="text-tertiary-level mt-4 mb-10"
               style={{ fontSize: "20px", lineHeight: 1.5 }}
             >
               查参数、看评价、比价格、聊搞机的第一站
@@ -757,12 +751,12 @@ export default function HomePage() {
                     <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-1" />
                   </Link>
                 }
-                className="h-12 px-8 bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-[#0B0F19] font-semibold rounded-xl transition-all duration-300 hover:shadow-[0_0_20px_rgba(0,217,255,0.4)] group"
+                className="h-12 px-8 bg-brand hover:bg-brand/90 text-background font-semibold rounded-xl transition-all duration-300 hover:shadow-[0_0_20px_var(--primary-glow-md)] group"
               />
               <Button
                 render={<Link href="/community">加入社区</Link>}
                 variant="outline"
-                className="h-12 px-8 bg-transparent border-white/20 text-[#F9FAFB] hover:bg-[rgba(255,255,255,0.05)] hover:border-white/30 rounded-xl transition-all duration-300"
+                className="h-12 px-8 bg-transparent border-white/20 text-primary-level hover:bg-white/5 hover:border-white/30 rounded-xl transition-all duration-300"
               />
             </motion.div>
           </motion.div>
@@ -785,10 +779,10 @@ export default function HomePage() {
             transition={{ duration: 0.6 }}
             className="text-center mb-16"
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-[#F9FAFB] mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-primary-level mb-4">
               三大核心模块
             </h2>
-            <p className="text-[#9CA3AF] max-w-xl mx-auto">
+            <p className="text-tertiary-level max-w-xl mx-auto">
               为数码发烧友打造的一站式手机资讯平台
             </p>
           </motion.div>
@@ -807,42 +801,32 @@ export default function HomePage() {
                 }}
               >
                 <Link href={feature.href} className="block group">
-                  <div 
-                    className="relative h-full rounded-2xl p-8 transition-all duration-500 hover:bg-white/[0.08] hover:border-[#00D9FF]/20 group-hover:shadow-[0_0_40px_rgba(0,217,255,0.1)]"
-                    style={{
-                      background: "rgba(17, 24, 39, 0.6)",
-                      backdropFilter: "blur(20px)",
-                      border: "1px solid rgba(255, 255, 255, 0.08)",
-                    }}
+                  <div
+                    className="relative h-full rounded-2xl p-8 transition-all duration-500 hover:bg-white/[0.08] hover:border-brand/20 group-hover:shadow-[0_0_40px_var(--primary-glow-xs)] bg-surface-card border border-white/[0.06]"
+                    style={{ backdropFilter: "blur(20px)" }}
                   >
-                    {/* Gradient Border Effect */}
                     <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
                     
-                    {/* Icon */}
                     <div className={`inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.color} mb-6 group-hover:scale-110 transition-transform duration-300`}>
-                      <feature.icon className="size-7 text-[#F9FAFB]" />
+                      <feature.icon className="size-7 text-primary-level" />
                     </div>
 
-                    {/* Stats Badge */}
                     <div className="absolute top-6 right-6">
                       <span 
-                        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-data text-[#00D9FF] border border-[#00D9FF]/20"
-                        style={{ background: "rgba(255, 255, 255, 0.05)" }}
+                        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-data text-brand border border-brand/20 bg-white/5"
                       >
                         {feature.stats}
                       </span>
                     </div>
 
-                    {/* Content */}
-                    <h3 className="text-xl font-bold text-[#F9FAFB] mb-3 group-hover:text-[#00D9FF] transition-colors">
+                    <h3 className="text-xl font-bold text-primary-level mb-3 group-hover:text-brand transition-colors">
                       {feature.title}
                     </h3>
-                    <p className="text-[#9CA3AF] text-sm leading-relaxed mb-6">
+                    <p className="text-tertiary-level text-sm leading-relaxed mb-6">
                       {feature.description}
                     </p>
 
-                    {/* Link */}
-                    <div className="flex items-center text-sm text-[#00D9FF] font-medium">
+                    <div className="flex items-center text-sm text-brand font-medium">
                       了解更多
                       <ChevronRight className="ml-1 size-4 transition-transform group-hover:translate-x-1" />
                     </div>
@@ -865,10 +849,10 @@ export default function HomePage() {
             className="flex items-center justify-between mb-12"
           >
             <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-[#F9FAFB] mb-2">
+              <h2 className="text-3xl md:text-4xl font-bold text-primary-level mb-2">
                 热门机型
               </h2>
-              <p className="text-[#9CA3AF]">实时监控全网价格动态</p>
+              <p className="text-tertiary-level">实时监控全网价格动态</p>
             </div>
             <Button
               render={
@@ -878,7 +862,7 @@ export default function HomePage() {
                 </Link>
               }
               variant="ghost"
-              className="text-[#00D9FF] hover:text-[#00D9FF] hover:bg-[#00D9FF]/10 hidden sm:flex"
+              className="text-brand hover:text-brand hover:bg-brand/10 hidden sm:flex"
             />
           </motion.div>
 
@@ -896,39 +880,33 @@ export default function HomePage() {
                 }}
               >
                 <Link href="/phones" className="block group">
-                  <div 
-                    className="rounded-2xl p-6 transition-all duration-300 hover:bg-white/[0.08] hover:border-[#00D9FF]/20 group-hover:shadow-[0_0_30px_rgba(0,217,255,0.1)]"
-                    style={{
-                      background: "rgba(17, 24, 39, 0.6)",
-                      backdropFilter: "blur(20px)",
-                      border: "1px solid rgba(255, 255, 255, 0.08)",
-                    }}
+                  <div
+                    className="rounded-2xl p-6 transition-all duration-300 hover:bg-white/[0.08] hover:border-brand/20 group-hover:shadow-[0_0_30px_var(--primary-glow-xs)] bg-surface-card border border-white/[0.06]"
+                    style={{ backdropFilter: "blur(20px)" }}
                   >
-                    {/* Brand & Trend */}
                     <div className="flex items-center justify-between mb-4">
-                      <span className="text-xs text-[#9CA3AF] font-data">
+                      <span className="text-xs text-tertiary-level font-data">
                         {phone.brand}
                       </span>
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-data ${
+                        className={cn(
+                          "inline-flex items-center px-2 py-0.5 rounded text-xs font-data",
                           phone.trend.startsWith("-")
-                            ? "text-[#34D399] bg-[#34D399]/10"
+                            ? "text-emerald-400 bg-emerald-400/10"
                             : phone.trend === "新品"
-                            ? "text-[#00D9FF] bg-[#00D9FF]/10"
-                            : "text-[#F59E0B] bg-[#F59E0B]/10"
-                        }`}
+                            ? "text-brand bg-brand/10"
+                            : "text-amber-500 bg-amber-500/10"
+                        )}
                       >
                         {phone.trend}
                       </span>
                     </div>
 
-                    {/* Phone Name */}
-                    <h3 className="text-lg font-semibold text-[#F9FAFB] mb-2 group-hover:text-[#00D9FF] transition-colors">
+                    <h3 className="text-lg font-semibold text-primary-level mb-2 group-hover:text-brand transition-colors">
                       {phone.name}
                     </h3>
 
-                    {/* Price */}
-                    <div className="font-data text-2xl font-bold text-[#34D399]">
+                    <div className="font-data text-2xl font-bold text-emerald-400">
                       {phone.price}
                     </div>
                   </div>
@@ -949,34 +927,28 @@ export default function HomePage() {
             transition={{ duration: 0.6 }}
             className="relative overflow-hidden rounded-3xl"
           >
-            {/* Background */}
             <div 
               className="absolute inset-0 opacity-20"
-              style={{ background: "linear-gradient(135deg, #00D9FF 0%, #A855F7 100%)" }}
+              style={{ background: "linear-gradient(135deg, var(--brand-primary) 0%, var(--purple) 100%)" }}
             />
-            <div className="absolute inset-0 bg-[#111827]/80" />
+            <div className="absolute inset-0 bg-background/80" />
             
-            {/* Content */}
             <div className="relative py-16 md:py-24 px-8 text-center">
-              <h2 className="text-3xl md:text-5xl font-bold text-[#F9FAFB] mb-6">
+              <h2 className="text-3xl md:text-5xl font-bold text-primary-level mb-6">
                 准备好探索了吗？
               </h2>
-              <p className="text-lg text-[#9CA3AF] max-w-xl mx-auto mb-10">
+              <p className="text-lg text-tertiary-level max-w-xl mx-auto mb-10">
                 加入数万名数码发烧友的行列，发现最适合你的设备
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Button
                   render={<Link href="/phones">浏览手机库</Link>}
-                  className="h-12 px-8 font-semibold rounded-xl transition-all duration-300 hover:shadow-[0_0_30px_rgba(0,217,255,0.4)]"
-                  style={{
-                    background: "linear-gradient(135deg, #00D9FF 0%, #A855F7 100%)",
-                    color: "#0B0F19",
-                  }}
+                  className="h-12 px-8 font-semibold rounded-xl transition-all duration-300 hover:shadow-[0_0_30px_var(--primary-glow-md)] bg-gradient-to-r from-brand to-purple-500 text-background"
                 />
                 <Button
                   render={<Link href="/community">加入社区</Link>}
                   variant="outline"
-                  className="h-12 px-8 bg-transparent border-white/20 text-[#F9FAFB] hover:bg-white/10 hover:border-[#00D9FF]/50 rounded-xl transition-all duration-300"
+                  className="h-12 px-8 bg-transparent border-white/20 text-primary-level hover:bg-white/10 hover:border-brand/50 rounded-xl transition-all duration-300"
                 />
               </div>
             </div>

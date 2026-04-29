@@ -152,7 +152,7 @@ export function AuraCard({
       boxShadow: "0 4px 24px rgba(0, 0, 0, 0.1), 0 0 20px var(--aura-glow)",
     },
     glass: {
-      background: "rgba(17, 24, 39, 0.6)",
+      background: "rgba(15, 23, 42, 0.6)",
       backdropFilter: "blur(20px)",
       border: "1px solid var(--aura-border-glow)",
       boxShadow: "0 4px 24px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255,255,255,0.05)",
@@ -254,7 +254,7 @@ export function AuraButton({
   const variantStyles = {
     filled: {
       background: "var(--aura-glow)",
-      color: "#0B0F19",
+      color: "#080c14",
       border: "none",
     },
     outline: {

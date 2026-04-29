@@ -3,10 +3,6 @@
 import { Palette } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// ============================================================================
-// 配色选择器组件
-// ============================================================================
-
 interface ColorSelectorProps {
   options?: { id: string; name: string; hex: string }[];
   selectedId?: string;
@@ -21,20 +17,30 @@ export function ColorSelector({ options, selectedId, onSelect }: ColorSelectorPr
       <Palette className="size-3 text-white/30" />
       <div className="flex gap-1">
         {options.map((color) => (
-          <button
+          <span
             key={color.id}
+            role="button"
+            tabIndex={0}
             onClick={(e) => {
               e.stopPropagation();
               onSelect(color.id);
             }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                e.stopPropagation();
+                onSelect(color.id);
+              }
+            }}
             className={cn(
-              "w-4 h-4 rounded-full border transition-all duration-200",
+              "w-4 h-4 rounded-full border transition-all duration-200 cursor-pointer",
               selectedId === color.id
                 ? "border-white/60 scale-110"
                 : "border-white/20 hover:border-white/40"
             )}
             style={{ backgroundColor: color.hex }}
             title={color.name}
+            aria-label={`选择${color.name}配色`}
           />
         ))}
       </div>

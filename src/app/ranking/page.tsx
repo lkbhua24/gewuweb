@@ -12,12 +12,14 @@ import {
   processRankingColors,
 } from "@/lib/color-theme";
 import { RankingCard } from "@/components/ranking/ranking-card";
+import { cn } from "@/lib/utils";
+import { getHeroTransitionState, setHeroTransitionState, loadPersistedReturnState, clearPersistedReturnState } from "@/hooks/use-hero-transition";
 
 // ============================================================================
 // Mock 数据 - 包含多配色选项
 // ============================================================================
 
-const MOCK_RANKINGS: Record<RankingType, PhoneRanking[]> = {
+export const MOCK_RANKINGS: Record<RankingType, PhoneRanking[]> = {
   comprehensive: [
     {
       id: "1", rank: 1, brand: "Apple", model: "iPhone 16 Pro Max", imageUrl: null, priceCny: 9999, screenType: "flat", materialType: "titanium",
@@ -187,22 +189,35 @@ const SCORE_LABELS: Record<keyof PhoneRanking["scores"], string> = {
 
 export default function RankingPage() {
   const [activeCategory, setActiveCategory] = useState<RankingType>("comprehensive");
+  const [displayCategory, setDisplayCategory] = useState<RankingType>("comprehensive");
+  const [isContentVisible, setIsContentVisible] = useState(true);
   const [rankings, setRankings] = useState(MOCK_RANKINGS);
   const [visibleItems, setVisibleItems] = useState<Set<number>>(new Set());
   const listRef = useRef<HTMLDivElement>(null);
 
-  const currentRankings = rankings[activeCategory];
-  const currentCategoryInfo = RANKING_CATEGORIES.find((c) => c.id === activeCategory);
+  const currentRankings = rankings[displayCategory];
+  const currentCategoryInfo = RANKING_CATEGORIES.find((c) => c.id === displayCategory);
 
-  // Intersection Observer - 检测卡片进入视口
+  const handleCategoryChange = useCallback((category: RankingType) => {
+    if (category === activeCategory) return;
+
+    setIsContentVisible(false);
+
+    setTimeout(() => {
+      setActiveCategory(category);
+      setDisplayCategory(category);
+      requestAnimationFrame(() => {
+        setIsContentVisible(true);
+      });
+    }, 180);
+  }, [activeCategory]);
+
   useEffect(() => {
     const container = listRef.current;
     if (!container) return;
 
-    // 重置可见性状态（当切换分类时）
     setVisibleItems(new Set());
 
-    // 使用 requestAnimationFrame 确保 DOM 已更新
     const rafId = requestAnimationFrame(() => {
       const items = container.querySelectorAll("[data-animate-item]");
       if (items.length === 0) return;
@@ -230,7 +245,7 @@ export default function RankingPage() {
     return () => {
       cancelAnimationFrame(rafId);
     };
-  }, [activeCategory, currentRankings.length]);
+  }, [displayCategory, currentRankings.length]);
 
   // 获取每个机型的有效颜色，并应用连续相近色降饱和
   const processedColors = useMemo(() => {
@@ -263,6 +278,37 @@ export default function RankingPage() {
     }));
   }, [activeCategory]);
 
+  // 检测当前是否有 Hero 转场中的卡片
+  const transitioningPhoneId = getHeroTransitionState().targetPhoneId;
+
+  // 检测是否有返回状态（从详情页返回）
+  const [returnPhoneId, setReturnPhoneId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const returnState = loadPersistedReturnState();
+    if (returnState) {
+      setReturnPhoneId(returnState.phoneId);
+      // 短暂延迟后清除返回状态，让占位符恢复为实体卡片
+      const timer = setTimeout(() => {
+        setReturnPhoneId(null);
+        clearPersistedReturnState();
+        // 重置全局状态
+        const current = getHeroTransitionState();
+        if (current.phase === "returning") {
+          // 通过重新设置状态来触发重新渲染
+          setHeroTransitionState({
+            phase: "idle",
+            sourceRect: null,
+            targetPhoneId: null,
+            themeColor: "",
+            phoneData: null,
+          });
+        }
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
   return (
     <div className="ranking-page-bg font-ranking-cn" style={cssVars}>
       {/* 全局容器 */}
@@ -277,7 +323,7 @@ export default function RankingPage() {
 
         {/* Tab 栏 */}
         <div className="mb-6 px-[4%] sm:px-0">
-          <Tabs value={activeCategory} onValueChange={(v) => setActiveCategory(v as RankingType)}>
+          <Tabs value={activeCategory} onValueChange={(v) => handleCategoryChange(v as RankingType)}>
             <TabsList
               variant="line"
               className="w-full justify-start flex-wrap ranking-tab-height h-auto gap-2 bg-transparent"
@@ -299,7 +345,12 @@ export default function RankingPage() {
         </div>
 
         {/* 当前分类信息 */}
-        <div className="mb-4 px-[4%] sm:px-0">
+        <div
+          className={cn(
+            "mb-4 px-[4%] sm:px-0 transition-all duration-300",
+            isContentVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
+          )}
+        >
           <div className="flex items-center gap-2 mb-2">
             <h2 className="text-lg font-semibold font-ranking-cn">{currentCategoryInfo?.label}</h2>
             <Badge variant="secondary" className="text-xs font-ranking-cn ranking-glass">
@@ -311,8 +362,14 @@ export default function RankingPage() {
           </p>
         </div>
 
-        {/* 排行榜列表 - 带 Intersection Observer */}
-        <div ref={listRef} className="flex flex-col ranking-card-gap px-[4%] sm:px-0">
+        {/* 排行榜列表 */}
+        <div
+          ref={listRef}
+          className={cn(
+            "flex flex-col ranking-card-gap px-[4%] sm:px-0 transition-all duration-300 ease-out",
+            isContentVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
+          )}
+        >
           {currentRankings.map((phone, index) => (
             <RankingCard
               key={phone.id}
@@ -323,6 +380,7 @@ export default function RankingPage() {
               isVisible={visibleItems.has(index)}
               staggerDelay={50}
               onColorSelect={handleColorSelect}
+              isPlaceholder={transitioningPhoneId === phone.id && returnPhoneId !== phone.id}
             />
           ))}
         </div>

@@ -71,7 +71,7 @@ export function PhoneAuraShowcase() {
             onClick={() => setSelectedPhone(phone)}
             className={cn(
               "p-3 rounded-xl text-xs text-center transition-all duration-200",
-              "border border-white/10 hover:border-white/20",
+              "border border-white/[0.06] hover:border-white/20",
               selectedPhone.brand === phone.brand && selectedPhone.model === phone.model
                 ? "bg-white/10 border-white/30"
                 : "bg-white/5"
@@ -269,7 +269,7 @@ export function PhoneAuraShowcase() {
       </div>
 
       {/* 自定义颜色测试 */}
-      <div className="border-t border-white/10 pt-6">
+      <div className="border-t border-white/[0.06] pt-6">
         <h3 className="text-lg font-semibold text-white mb-4">自定义颜色测试</h3>
         <div className="flex gap-4 items-center">
           <input
@@ -282,7 +282,7 @@ export function PhoneAuraShowcase() {
             type="text"
             value={customHex}
             onChange={(e) => setCustomHex(e.target.value)}
-            className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm w-32"
+            className="px-4 py-2 rounded-xl bg-white/5 border border-white/[0.06] text-white text-sm w-32"
           />
           <AuraBackground
             customHex={customHex}
@@ -295,7 +295,7 @@ export function PhoneAuraShowcase() {
       </div>
 
       {/* 预设主题 */}
-      <div className="border-t border-white/10 pt-6">
+      <div className="border-t border-white/[0.06] pt-6">
         <h3 className="text-lg font-semibold text-white mb-4">预设主题</h3>
         <div className="grid grid-cols-4 gap-3">
           {Object.entries(PRESET_AURA_THEMES).map(([key, theme]) => (

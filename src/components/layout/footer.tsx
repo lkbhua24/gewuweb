@@ -78,7 +78,7 @@ const socialLinks = [
 
 export function Footer() {
   return (
-    <footer className="relative bg-[#0B0F19]">
+    <footer className="relative bg-background">
       {/* Top Gradient Line - 极淡的渐变分割线 */}
       <div
         className="absolute top-0 left-0 right-0 h-px"
@@ -95,12 +95,12 @@ export function Footer() {
           <div className="col-span-2 md:col-span-1">
             <Link
               href="/"
-              className="inline-flex items-center gap-2 font-bold text-xl text-[#9CA3AF] mb-4"
+              className="inline-flex items-center gap-2 font-bold text-xl text-tertiary-level mb-4"
             >
-              <span className="text-[#6B7280]">◆</span>
+              <span className="text-disabled-level">◆</span>
               <span>极物</span>
             </Link>
-            <p className="text-sm text-[#9CA3AF] leading-relaxed mb-6">
+            <p className="text-sm text-tertiary-level leading-relaxed mb-6">
               查参数、看评价、比价格、聊搞机的第一站
             </p>
 
@@ -110,7 +110,7 @@ export function Footer() {
                 <Link
                   key={social.label}
                   href={social.href}
-                  className="flex items-center justify-center w-9 h-9 rounded-lg text-[#6B7280] hover:text-[#9CA3AF] transition-colors duration-200"
+                  className="flex items-center justify-center w-9 h-9 rounded-lg text-disabled-level hover:text-tertiary-level transition-colors duration-200"
                   aria-label={social.label}
                 >
                   <social.icon className="size-4" />
@@ -122,7 +122,7 @@ export function Footer() {
           {/* Links Columns */}
           {Object.values(footerLinks).map((section) => (
             <div key={section.title}>
-              <h3 className="font-medium text-[#9CA3AF] mb-4 text-sm">
+              <h3 className="font-medium text-tertiary-level mb-4 text-sm">
                 {section.title}
               </h3>
               <ul className="space-y-3">
@@ -130,7 +130,7 @@ export function Footer() {
                   <li key={link.label}>
                     <Link
                       href={link.href}
-                      className="text-sm text-[#6B7280] hover:text-[#9CA3AF] transition-colors duration-200"
+                      className="text-sm text-disabled-level hover:text-tertiary-level transition-colors duration-200"
                     >
                       {link.label}
                     </Link>
@@ -143,7 +143,7 @@ export function Footer() {
 
         {/* Copyright */}
         <div className="mt-16 pt-8 text-center">
-          <p style={{ fontSize: "12px", color: "#6B7280" }}>
+          <p className="text-xs text-disabled-level">
             © {new Date().getFullYear()} 极物. All rights reserved.
           </p>
         </div>

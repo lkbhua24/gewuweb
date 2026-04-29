@@ -7,6 +7,7 @@ import type { PhoneRanking, RankingType } from "@/types/ranking";
 import { RANKING_CATEGORIES } from "@/types/ranking";
 import { PhoneSilhouette } from "./phone-silhouette";
 import { ColorSelector } from "./color-selector";
+import { useHeroTransition } from "@/hooks/use-hero-transition";
 
 // ============================================================================
 // 排行榜卡片组件 - 包含交互动效
@@ -20,6 +21,7 @@ interface RankingCardProps {
   isVisible: boolean;
   staggerDelay?: number;
   onColorSelect: (phoneId: string, colorId: string) => void;
+  isPlaceholder?: boolean;
 }
 
 interface RippleState {
@@ -37,6 +39,7 @@ export function RankingCard({
   isVisible,
   staggerDelay = 50,
   onColorSelect,
+  isPlaceholder = false,
 }: RankingCardProps) {
   const scoreKey = RANKING_CATEGORIES.find((c) => c.id === currentCategory)?.scoreKey || "overall";
   const mainScore = phone.scores[scoreKey];
@@ -52,11 +55,17 @@ export function RankingCard({
   const scoreStr = mainScore.toFixed(1);
   const [scoreInt, scoreDecimal] = scoreStr.split(".");
 
+  // Hero 转场动画
+  const { startTransition } = useHeroTransition();
+  const cardRef = useRef<HTMLButtonElement>(null);
+
   // 按压反馈状态
   const [scale, setScale] = useState(1);
   const [isPressed, setIsPressed] = useState(false);
+  const [isLongPress, setIsLongPress] = useState(false);
   const [ripples, setRipples] = useState<RippleState[]>([]);
   const rippleIdRef = useRef(0);
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // 创建 ripple
   const createRipple = useCallback((clientX: number, clientY: number, rect: DOMRect) => {
@@ -94,6 +103,13 @@ export function RankingCard({
 
     setIsPressed(true);
     setScale(0.96);
+    setIsLongPress(false);
+
+    // 长按检测（500ms）
+    longPressTimerRef.current = setTimeout(() => {
+      setIsLongPress(true);
+      setScale(0.97);
+    }, 500);
 
     // 获取点击坐标
     let clientX: number, clientY: number;
@@ -112,18 +128,56 @@ export function RankingCard({
   const handlePressEnd = useCallback(() => {
     if (!isPressed) return;
 
+    // 清除长按计时器
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+
     setIsPressed(false);
+
+    // 如果是长按状态，直接恢复
+    if (isLongPress) {
+      setIsLongPress(false);
+      setScale(1);
+      return;
+    }
 
     // Spring 回弹动画：0.96 → 1.02 → 1.0
     setScale(1.02);
 
     setTimeout(() => {
       setScale(1);
-    }, 120); // 回弹时间占 40% 的 300ms
-  }, [isPressed]);
+    }, 120);
+
+    // 触发 Hero 转场动画
+    if (cardRef.current) {
+      const categoryLabel = RANKING_CATEGORIES.find((c) => c.id === currentCategory)?.label || "评分";
+      startTransition({
+        element: cardRef.current,
+        phoneId: phone.id,
+        themeColor,
+        phoneData: {
+          brand: phone.brand,
+          model: phone.model,
+          priceCny: phone.priceCny,
+          score: mainScore,
+          scoreLabel: categoryLabel,
+          rank: phone.rank,
+          screenType: phone.screenType,
+          imageUrl: phone.imageUrl,
+        },
+        targetUrl: `/phones/${phone.id}?from=ranking`,
+      });
+    }
+  }, [isPressed, isLongPress, phone, themeColor, mainScore, currentCategory, startTransition]);
 
   // 处理鼠标离开
   const handleMouseLeave = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
     if (isPressed) {
       handlePressEnd();
     }
@@ -190,41 +244,79 @@ export function RankingCard({
     ? `transform 100ms cubic-bezier(0.4, 0, 0.2, 1)`
     : `transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1)`;
 
+  // 占位符状态
+  if (isPlaceholder) {
+    return (
+      <div
+        data-animate-item
+        data-animate-index={index}
+        className={cn(
+          "capsule-card relative overflow-hidden",
+          isTopThree && "capsule-card-top3"
+        )}
+        style={{
+          opacity: 0.3,
+          pointerEvents: "none",
+          filter: "grayscale(0.8)",
+        }}
+      >
+        <div className="capsule-layer-1 h-full" />
+        <div className="capsule-layer-2 absolute inset-0 flex items-center">
+          <div className="flex items-center w-full h-full px-5">
+            <div className="flex-shrink-0 w-[72px] flex items-center gap-2">
+              <div className="rank-badge-normal">{phone.rank}</div>
+            </div>
+            <div className="flex-1 min-w-0 px-3">
+              <span className="text-xs text-muted-foreground font-ranking-cn">{phone.brand}</span>
+              <h3 className="font-ranking-cn font-medium text-sm truncate leading-tight">{phone.model}</h3>
+            </div>
+            <div className="flex-shrink-0 w-[80px] text-right">
+              <div className="text-xl font-ranking-num font-bold text-muted-foreground">{scoreInt}.{scoreDecimal}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       data-animate-item
       data-animate-index={index}
       className={cn(
-        "capsule-card group cursor-pointer capsule-pressable relative overflow-hidden",
-        isTopThree && "capsule-card-top3",
-        getEdgeClass(),
-        getMaterialClass(),
-        // 入场动画控制
         !isVisible && "capsule-animate-hidden",
         isVisible && "capsule-animate-enter"
       )}
-      style={{
-        // CSS 变量
-        ["--capsule-start" as string]: matrix.capsuleGradientStart,
-        ["--capsule-end" as string]: matrix.capsuleGradientEnd,
-        ["--badge-stroke" as string]: matrix.top3BadgeStroke,
-        ["--badge-bg" as string]: matrix.top3BadgeBackground,
-        ["--price-color" as string]: matrix.priceText,
-        ["--param-color" as string]: matrix.coreParamValue,
-        ["--decimal-color" as string]: matrix.scoreDecimal,
-        // 按压反馈 transform
-        transform: `scale(${scale})`,
-        transition: transitionStyle,
-        // 入场动画延迟（错开时间）
-        animationDelay: isVisible ? `${animationDelay}ms` : "0ms",
-      }}
-      onMouseDown={handlePressStart}
-      onMouseUp={handlePressEnd}
-      onMouseLeave={handleMouseLeave}
-      onTouchStart={handlePressStart}
-      onTouchEnd={handlePressEnd}
+      style={{ animationDelay: isVisible ? `${animationDelay}ms` : "0ms" }}
     >
-      {/* Ripple 效果层 */}
+      <button
+        ref={cardRef}
+        role="link"
+        aria-label={`${phone.brand} ${phone.model}，排名第${phone.rank}，${mainScore.toFixed(1)}分`}
+        className={cn(
+          "capsule-card group cursor-pointer capsule-pressable relative overflow-hidden block text-left",
+          isTopThree && "capsule-card-top3",
+          getEdgeClass(),
+          getMaterialClass(),
+          isLongPress && "capsule-long-press"
+        )}
+        style={{
+          ["--capsule-start" as string]: matrix.capsuleGradientStart,
+          ["--capsule-end" as string]: matrix.capsuleGradientEnd,
+          ["--badge-stroke" as string]: matrix.top3BadgeStroke,
+          ["--badge-bg" as string]: matrix.top3BadgeBackground,
+          ["--price-color" as string]: matrix.priceText,
+          ["--param-color" as string]: matrix.coreParamValue,
+          ["--decimal-color" as string]: matrix.scoreDecimal,
+          transform: `scale(${scale})`,
+          transition: transitionStyle,
+        }}
+        onMouseDown={handlePressStart}
+        onMouseUp={handlePressEnd}
+        onMouseLeave={handleMouseLeave}
+        onTouchStart={handlePressStart}
+        onTouchEnd={handlePressEnd}
+      >
       {ripples.map((ripple) => (
         <span
           key={ripple.id}
@@ -236,12 +328,13 @@ export function RankingCard({
             height: ripple.size,
             marginLeft: -ripple.size / 2,
             marginTop: -ripple.size / 2,
-            background: `radial-gradient(circle, ${matrix.capsuleGradientEnd} 0%, transparent 70%)`,
+            background: `radial-gradient(circle, ${themeColor}30 0%, ${themeColor}10 40%, transparent 70%)`,
           }}
         />
       ))}
 
-      {/* Layer 0: 主题色氛围晕染 - 底层 */}
+      <div className="capsule-shine" />
+
       <div
         className="capsule-layer-0"
         style={{
@@ -290,7 +383,7 @@ export function RankingCard({
             <div className="flex items-center gap-2 mb-0.5 flex-wrap">
               <span className="text-xs text-muted-foreground font-ranking-cn">{phone.brand}</span>
               {phone.screenType === "curved" && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-white/40 font-ranking-cn">
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-white/60 font-ranking-cn">
                   曲面
                 </span>
               )}
@@ -346,6 +439,7 @@ export function RankingCard({
           </div>
         </div>
       </div>
+    </button>
     </div>
   );
 }

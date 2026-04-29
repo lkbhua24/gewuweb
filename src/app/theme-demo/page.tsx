@@ -7,7 +7,7 @@ export const metadata = {
 
 export default function ThemeDemoPage() {
   return (
-    <div className="min-h-screen bg-[#0B0F19]">
+    <div className="min-h-screen bg-[#080c14]">
       <div className="max-w-5xl mx-auto py-8">
         <PhoneAuraShowcase />
       </div>
