@@ -20,10 +20,15 @@ interface HeroOverlayProps {
 export function HeroTransitionOverlay({ onTransitionComplete }: HeroOverlayProps) {
   const [state, setState] = useState<HeroTransitionState>(getHeroTransitionState());
   const [animationProgress, setAnimationProgress] = useState(0);
+  const [targetWidth, setTargetWidth] = useState(375);
   const router = useRouter();
   const animationRef = useRef<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
   const navigateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    setTargetWidth(window.innerWidth);
+  }, []);
 
   useEffect(() => {
     const checkState = () => {
@@ -101,7 +106,6 @@ export function HeroTransitionOverlay({ onTransitionComplete }: HeroOverlayProps
 
   const { sourceRect, phoneData, themeColor } = state;
 
-  const targetWidth = typeof window !== "undefined" ? window.innerWidth : 375;
   const targetHeight = 280;
   const targetBorderRadius = "0px 0px 24px 24px";
 

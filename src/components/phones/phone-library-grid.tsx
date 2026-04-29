@@ -83,9 +83,13 @@ function getStatus(releaseDate: string): PhoneStatus {
 }
 
 // 生成热度趋势数据（模拟近7天热度）
+// 使用基于 baseScore 的确定性伪随机，避免 hydration 不匹配
 function generateHeatTrend(baseScore: number): number[] {
   return Array.from({ length: 7 }, (_, i) => {
-    const variation = Math.random() * 10 - 5;
+    // 使用简单的伪随机算法，基于 baseScore 和索引生成确定性值
+    const seed = baseScore * 100 + i * 13;
+    const pseudoRandom = ((seed * 9301 + 49297) % 233280) / 233280;
+    const variation = pseudoRandom * 10 - 5;
     return Math.max(0, Math.min(100, Math.round(baseScore + variation)));
   });
 }

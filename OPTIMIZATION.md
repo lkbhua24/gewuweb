@@ -1,13 +1,71 @@
 # 格物 (Gewu) 项目优化文档
 
 > 生成日期：2026-04-26
-> 版本：v1.0
+> 版本：v2.0
 
 ## 📋 项目概述
 
 **项目名称**：格物 (Gewu) - 手机测评社区平台
 **技术栈**：Next.js 16 + React 19 + TypeScript + Tailwind CSS v4 + Supabase
-**项目规模**：80+ 组件，涵盖手机测评、社区交流、用户系统等功能
+**项目规模**：100+ 组件，涵盖手机测评、社区交流、用户系统、主题展示等功能
+
+---
+
+## 📁 项目结构
+
+```
+src/
+├── app/                    # Next.js App Router
+│   ├── auth/              # 认证相关页面
+│   ├── community/         # 社区功能
+│   ├── phones/            # 手机库页面
+│   ├── ranking/           # 排行榜
+│   ├── shopping/          # 购物功能
+│   ├── profile/           # 用户中心
+│   └── theme-demo/        # 主题展示
+├── components/
+│   ├── ui/                # shadcn/ui 基础组件
+│   ├── layout/            # 布局组件 (Header, Footer, MobileNav)
+│   ├── phones/            # 手机相关组件 (20+)
+│   ├── ranking/           # 排行榜组件
+│   ├── community/         # 社区组件
+│   ├── shopping/          # 购物组件
+│   ├── theme/             # 主题展示组件 (15+)
+│   └── shared/            # 共享组件
+├── hooks/                 # 自定义 Hooks
+├── lib/                   # 工具函数
+├── types/                 # TypeScript 类型
+└── config/                # 配置文件
+```
+
+---
+
+## 🆕 最新功能更新 (v2.0)
+
+### 主题展示系统
+- `dynamic-theme-showcase.tsx` - 动态主题展示
+- `particle-background.tsx` - 粒子背景效果
+- `particle-showcase.tsx` - 粒子效果展示
+- `phone-3d-showcase.tsx` - 3D手机展示
+- `phone-detail-page.tsx` - 手机详情页
+- `phone-info-panel.tsx` - 手机信息面板
+- `phone-specs-grid.tsx` - 规格网格展示
+- `price-chart.tsx` - 价格趋势图表
+- `price-comparison-matrix.tsx` - 价格对比矩阵
+- `purchase-decision-bar.tsx` - 购买决策栏
+- `review-sentiment-analysis.tsx` - 评论情感分析
+- `score-dashboard.tsx` - 评分仪表盘
+- `visual-mood-board.tsx` - 视觉心情板
+
+### 新增 Hooks
+- `use-dynamic-theme.ts` - 动态主题管理
+- `use-theme-css-variables.ts` - CSS变量主题管理
+
+### 手机库功能增强
+- `phone-library-grid.tsx` - 手机库网格布局
+- `phone-detail-header.tsx` - 详情页头部
+- `score-radar-chart.tsx` - 雷达图评分
+- `category-detail-panel.tsx` - 分类详情面板
 
 ---
 
@@ -30,136 +88,146 @@ const nextConfig: NextConfig = {
         hostname: "**.supabase.co",
       },
     ],
-    formats: ['image/avif', 'image/webp'], // 添加现代图片格式
+    formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
-  // 启用压缩
   compress: true,
 };
 ```
 
-**实施优先级**：⭐⭐⭐⭐⭐
-
 ### 2. 组件懒加载
 
-**建议**：对非首屏组件实施懒加载
+**建议**：对主题展示组件实施懒加载
 
 ```typescript
-// 使用动态导入
+// 动态导入主题组件
 import dynamic from 'next/dynamic';
 
-const HeroTransitionOverlay = dynamic(
-  () => import('@/components/ranking/hero-transition-overlay'),
-  { ssr: false }
+const ParticleShowcase = dynamic(
+  () => import('@/components/theme/particle-showcase'),
+  { ssr: false, loading: () => <Skeleton /> }
 );
 
-const ComparePanel = dynamic(
-  () => import('@/components/phones/compare-panel'),
+const Phone3DShowcase = dynamic(
+  () => import('@/components/theme/phone-3d-showcase'),
   { ssr: false }
 );
 ```
 
-**高收益组件**：
-- `hero-transition-overlay.tsx` - 动画组件
-- `compare-panel.tsx` - 对比功能面板
-- `score-radar-chart.tsx` - 图表组件
-- `aura-background.tsx` - 背景特效
+### 3. 主题系统优化
 
-### 3. CSS 优化
+**CSS 变量管理**：
+```typescript
+// 使用 CSS 变量实现动态主题
+:root {
+  --theme-primary: hsl(var(--primary));
+  --theme-background: hsl(var(--background));
+  --theme-card: hsl(var(--card));
+}
 
-**现状**：使用 Tailwind CSS v4，globals.css 约 2000+ 行
-
-**优化建议**：
-1. **拆分 CSS 文件**：
-   ```
-   src/styles/
-   ├── globals.css          # 全局基础样式
-   ├── utilities.css        # 工具类
-   ├── animations.css       # 动画样式
-   └── themes.css           # 主题样式
-   ```
-
-2. **使用 @layer 组织**：
-   ```css
-   @layer base { /* 基础样式 */ }
-   @layer components { /* 组件样式 */ }
-   @layer utilities { /* 工具类 */ }
-   ```
-
-3. **移除未使用样式**：
-   ```bash
-   npm install -D @fullhuman/postcss-purgecss
-   ```
+// 动态主题切换
+[data-theme="dark"] {
+  --primary: 0 0% 98%;
+  --background: 240 10% 3.9%;
+}
+```
 
 ---
 
 ## 📦 代码结构优化
 
-### 1. 组件组织
+### 1. 组件组织优化
 
 **当前结构**：
 ```
 src/components/
-├── ui/               # shadcn/ui 组件
+├── ui/               # 基础UI组件 (shadcn)
 ├── layout/           # 布局组件
-├── phones/           # 手机相关组件 (17个)
-├── ranking/          # 排行榜组件
-├── community/        # 社区组件
-├── theme/            # 主题组件
+├── phones/           # 手机功能 (20+ 组件)
+├── ranking/          # 排行榜
+├── community/        # 社区
+├── theme/            # 主题展示 (15+ 组件)
 └── shared/           # 共享组件
 ```
 
 **优化建议**：
-1. **按功能域分组**：
+1. **主题组件分组**：
    ```
-   src/components/
-   ├── ui/               # 基础UI组件
-   ├── layout/           # 布局组件
-   ├── features/         # 功能组件
-   │   ├── phones/
-   │   ├── ranking/
-   │   ├── community/
-   │   └── shopping/
-   └── shared/           # 共享组件
+   src/components/theme/
+   ├── showcase/       # 展示类组件
+   ├── charts/         # 图表组件
+   ├── backgrounds/    # 背景效果
+   └── panels/         # 面板组件
    ```
 
-2. **组件索引导出**：
+2. **添加组件索引**：
    ```typescript
-   // src/components/features/phones/index.ts
-   export { PhoneCard } from './phone-card';
-   export { ComparePanel } from './compare-panel';
-   // ... 其他导出
+   // src/components/theme/index.ts
+   export { DynamicThemeShowcase } from './dynamic-theme-showcase';
+   export { ParticleBackground } from './particle-background';
+   export { ScoreDashboard } from './score-dashboard';
+   // ...
    ```
 
 ### 2. Hooks 优化
 
-**当前 Hooks**：
+**当前 Hooks 列表**：
 - `use-auth.ts` - 认证
 - `use-media-query.ts` - 媒体查询
-- `use-aura-theme.ts` - 主题
+- `use-aura-theme.ts` - Aura主题
 - `use-edge-swipe.ts` - 边缘滑动
 - `use-hero-transition.ts` - 英雄区过渡
+- `use-dynamic-theme.ts` - 动态主题
+- `use-theme-css-variables.ts` - CSS变量主题
 
 **建议新增**：
 ```typescript
+// use-intersection-observer.ts - 视口检测（用于懒加载）
 // use-debounce.ts - 防抖
-// use-throttle.ts - 节流
 // use-local-storage.ts - 本地存储
-// use-intersection-observer.ts - 视口检测
-// use-fetch.ts - 数据获取
+// use-scroll-position.ts - 滚动位置
+// use-animation-frame.ts - 动画帧管理
 ```
 
-### 3. 类型定义优化
+---
 
-**建议**：集中管理类型定义
+## 🎨 主题系统优化
+
+### 1. 动态主题架构
+
+**当前实现**：`use-dynamic-theme.ts` + `use-theme-css-variables.ts`
+
+**优化建议**：
+```typescript
+// 主题配置集中管理
+export const themes = {
+  light: {
+    primary: '220 90% 56%',
+    background: '0 0% 100%',
+    card: '0 0% 98%',
+  },
+  dark: {
+    primary: '0 0% 98%',
+    background: '240 10% 3.9%',
+    card: '240 10% 5%',
+  },
+  // 品牌定制主题
+  brand: {
+    primary: '200 100% 50%',
+    // ...
+  }
+};
 ```
-src/types/
-├── index.ts          # 统一导出
-├── models/           # 数据模型
-├── api/              # API 类型
-└── components/       # 组件 Props
-```
+
+### 2. 粒子效果优化
+
+**组件**：`particle-background.tsx`, `particle-showcase.tsx`
+
+**优化建议**：
+- 使用 `requestAnimationFrame` 优化动画性能
+- 实现粒子数量自适应（根据设备性能）
+- 支持减少动画偏好设置 `prefers-reduced-motion`
 
 ---
 
@@ -167,7 +235,6 @@ src/types/
 
 ### 1. 环境变量管理
 
-**建议**：
 ```typescript
 // src/lib/env.ts
 import { z } from 'zod';
@@ -181,21 +248,7 @@ const envSchema = z.object({
 export const env = envSchema.parse(process.env);
 ```
 
-### 2. Supabase 安全
-
-**当前配置**：`src/lib/supabase/middleware.ts`
-
-**优化建议**：
-1. 启用 RLS (Row Level Security)
-2. 设置适当的 CORS 策略
-3. 限制 API 请求频率
-
-### 3. XSS 防护
-
-**建议**：
-- 对用户输入进行转义
-- 使用 DOMPurify 处理富文本
-- 设置 CSP (Content Security Policy)
+### 2. CSP 配置
 
 ```typescript
 // next.config.ts
@@ -207,7 +260,13 @@ const nextConfig = {
         headers: [
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' https://*.supabase.co data:",
+              "connect-src 'self' https://*.supabase.co",
+            ].join('; '),
           },
         ],
       },
@@ -220,11 +279,8 @@ const nextConfig = {
 
 ## 🔍 SEO 优化
 
-### 1. 元数据优化
+### 1. 元数据配置
 
-**现状**：`layout.tsx` 已配置基础 metadata
-
-**优化建议**：
 ```typescript
 // src/lib/seo.ts
 export const defaultMetadata = {
@@ -240,66 +296,49 @@ export const defaultMetadata = {
     locale: 'zh_CN',
     siteName: '格物',
   },
-  robots: {
-    index: true,
-    follow: true,
-  },
 };
 ```
 
 ### 2. 结构化数据
 
-**建议**：添加 JSON-LD
 ```typescript
-// 产品页面
+// 产品页面 JSON-LD
 const productJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Product',
   name: phone.name,
   image: phone.images,
   description: phone.description,
-  brand: {
-    '@type': 'Brand',
-    name: phone.brand,
+  brand: { '@type': 'Brand', name: phone.brand },
+  aggregateRating: {
+    '@type': 'AggregateRating',
+    ratingValue: phone.score,
+    reviewCount: phone.reviewCount,
   },
 };
 ```
-
-### 3. 路由优化
-
-**建议**：
-- `/phones/[id]` → 规范 URL
-- `/phones/compare?ids=1,2,3` → 对比页面优化
-- 添加 sitemap.xml
 
 ---
 
 ## ⚡ 构建与部署优化
 
-### 1. Next.js 配置优化
+### 1. Next.js 配置
 
 ```typescript
 // next.config.ts
 const nextConfig: NextConfig = {
-  // 输出静态导出（如需要）
-  // output: 'export',
-  
-  // 启用 React Strict Mode
   reactStrictMode: true,
-  
-  // 禁用 x-powered-by
   poweredByHeader: false,
-  
-  // 启用 gzip 压缩
   compress: true,
   
-  // 实验性功能
   experimental: {
-    // 优化包体积
-    optimizePackageImports: ['lucide-react', 'framer-motion'],
+    optimizePackageImports: [
+      'lucide-react',
+      'framer-motion',
+      'recharts',  // 如果使用图表库
+    ],
   },
   
-  // 图片优化
   images: {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
@@ -319,58 +358,38 @@ npm install -D @next/bundle-analyzer
 ANALYZE=true npm run build
 ```
 
-### 3. 依赖优化
-
-**建议审查的依赖**：
-| 依赖 | 现状 | 建议 |
-|------|------|------|
-| framer-motion | 使用中 | 仅导入需要的功能 |
-| lucide-react | 使用中 | 使用 tree-shaking |
-| @base-ui/react | 已安装 | 评估是否必要 |
-
----
-
-## 🧪 测试策略
-
-### 1. 测试框架配置
-
-```bash
-# 安装测试依赖
-npm install -D vitest @testing-library/react @testing-library/jest-dom
-```
-
-### 2. 测试建议
-
-**优先级排序**：
-1. **单元测试**：工具函数 (`lib/utils.ts`, `lib/phone-utils.ts`)
-2. **组件测试**：核心 UI 组件
-3. **集成测试**：关键用户流程
-4. **E2E 测试**：完整业务流程
-
 ---
 
 ## 📱 移动端优化
 
-### 1. 触摸优化
+### 1. 触摸交互优化
 
 **已有**：`use-edge-swipe.ts` 边缘滑动检测
 
-**建议**：
-```typescript
-// 添加触摸反馈
+**新增建议**：
+```css
+/* 触摸反馈 */
 @media (hover: none) {
   .touch-feedback:active {
     opacity: 0.7;
     transform: scale(0.98);
+    transition: all 0.1s ease;
+  }
+}
+
+/* 减少动画偏好 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }
 ```
 
 ### 2. 响应式断点
 
-**当前**：使用 Tailwind 默认断点
-
-**建议自定义**：
 ```javascript
 // tailwind.config.ts
 screens: {
@@ -389,29 +408,27 @@ screens: {
 
 ### 第一阶段（立即执行）
 - [ ] 配置图片格式支持 (avif/webp)
-- [ ] 添加动态导入懒加载
+- [ ] 为主题组件添加懒加载
 - [ ] 优化 next.config.ts
 
 ### 第二阶段（短期）
-- [ ] 重构组件目录结构
-- [ ] 添加常用 Hooks
+- [ ] 重构 theme 目录结构
+- [ ] 添加常用 Hooks (debounce, intersection-observer)
 - [ ] 完善 SEO 元数据
 
 ### 第三阶段（中期）
-- [ ] 配置测试框架
+- [ ] 配置测试框架 (Vitest)
 - [ ] 添加 Bundle 分析
 - [ ] 实施安全加固
 
 ### 第四阶段（长期）
-- [ ] 性能监控
-- [ ] 错误追踪
+- [ ] 性能监控接入
+- [ ] 错误追踪 (Sentry)
 - [ ] 用户行为分析
 
 ---
 
 ## 📊 性能基准
-
-### 当前预估指标
 
 | 指标 | 目标值 | 优先级 |
 |------|--------|--------|
@@ -420,27 +437,47 @@ screens: {
 | Time to Interactive | < 3.8s | ⭐⭐⭐⭐ |
 | Cumulative Layout Shift | < 0.1 | ⭐⭐⭐⭐ |
 
-### 监控工具推荐
+---
 
-1. **Vercel Analytics** - 内置性能监控
-2. **Google PageSpeed Insights** - 性能评分
-3. **Lighthouse CI** - 自动化审计
+## 📝 组件清单
+
+### UI 组件 (shadcn)
+- Button, Card, Input, Badge, Avatar
+- Dialog, Dropdown, Sheet, Tooltip
+- Tabs, Table, ScrollArea, Skeleton
+- NavigationMenu, Separator
+
+### 业务组件
+- **手机模块**：PhoneCard, ComparePanel, PhoneLibraryGrid, ScoreRadarChart
+- **排行榜模块**：RankingCard, ColorSelector, HeroTransitionOverlay
+- **社区模块**：CircleCard, PostCard
+- **主题模块**：15+ 展示组件
+- **布局模块**：Header, Footer, MobileNav
 
 ---
 
-## 📝 总结
+## 🧪 测试策略
 
-本项目是一个功能完善的 Next.js 应用，具有良好的组件化架构。主要优化方向：
+```bash
+# 安装测试依赖
+npm install -D vitest @testing-library/react @testing-library/jest-dom
 
-1. **性能**：图片优化、懒加载、代码分割
-2. **结构**：目录重构、类型统一
-3. **安全**：环境变量验证、CSP 配置
-4. **SEO**：结构化数据、元数据完善
-5. **质量**：测试覆盖、代码规范
-
-建议按照优先级逐步实施，每次优化后使用 Lighthouse 进行验证。
+# 测试优先级
+1. 工具函数 (lib/utils.ts, lib/phone-utils.ts)
+2. 核心 Hooks (use-auth.ts, use-dynamic-theme.ts)
+3. 关键 UI 组件
+4. 页面集成测试
+```
 
 ---
 
-*文档生成时间：2026-04-26*
-*维护者：开发团队*
+## 📚 文档维护
+
+- 本文档版本：v2.0
+- 最后更新：2026-04-26
+- 维护者：开发团队
+- 更新频率：每迭代周期
+
+---
+
+*本文档随代码一起推送至 GitHub 仓库*

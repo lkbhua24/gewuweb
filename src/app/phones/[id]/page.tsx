@@ -1,303 +1,119 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import { motion, useAnimation } from "framer-motion";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
-import { ShoppingCart, ChevronRight } from "lucide-react";
-import { PhoneDetailHeader } from "@/components/phones/phone-detail-header";
-import { ScoreRadarChart } from "@/components/phones/score-radar-chart";
-import { CategoryDetailPanel } from "@/components/phones/category-detail-panel";
-import { ReviewCapsuleList, MOCK_REVIEWS } from "@/components/phones/review-capsule-card";
-import { loadPersistedHeroState, useHeroTransition } from "@/hooks/use-hero-transition";
+import { useEffect, useState } from "react";
+import { PhoneDetailPage } from "@/components/theme/phone-detail-page";
 import { getPhonePrimaryColor } from "@/lib/color-theme";
-import type { PhoneRanking, RankingType } from "@/types/ranking";
-import { RANKING_CATEGORIES } from "@/types/ranking";
-import { MOCK_RANKINGS } from "@/app/ranking/page";
 
 // ============================================================================
-// 手机详情页 - 包含完整参数呈现、雷达图、评论
-// 支持返回手势动画
+// 手机详情页 - 集成完整主题详情页组件
 // ============================================================================
 
-export default function PhoneDetailPage({
+// 手机品牌中文映射
+const BRAND_CN_MAP: Record<string, string> = {
+  "Apple": "苹果",
+  "Xiaomi": "小米",
+  "Huawei": "华为",
+  "Samsung": "三星",
+  "OPPO": "OPPO",
+  "vivo": "vivo",
+  "OnePlus": "一加",
+  "iQOO": "iQOO",
+  "Honor": "荣耀",
+  "Meizu": "魅族",
+  "Redmi": "Redmi",
+  "realme": "真我",
+  "Nubia": "努比亚",
+};
+
+// 手机数据（与 phone-library-grid.tsx 共享的数据）
+const rawPhonesData = [
+  { id: "1", brand: "Apple", model: "iPhone 16 Pro Max", price: 9999, releaseDate: "2024-09-20", specs: { chip: "A18 Pro", screen: "6.9英寸 OLED", battery: "4685mAh", charging: "40W", camera: "48MP+12MP+12MP", os: "iOS 18" }, tagline: "钛金属设计 · 影像旗舰" },
+  { id: "2", brand: "Apple", model: "iPhone 16 Pro", price: 7999, releaseDate: "2024-09-20", specs: { chip: "A18 Pro", screen: "6.3英寸 OLED", battery: "3582mAh", charging: "40W", camera: "48MP+12MP+12MP", os: "iOS 18" }, tagline: "钛金属设计 · 专业影像" },
+  { id: "3", brand: "Xiaomi", model: "小米 15 Ultra", price: 5999, releaseDate: "2025-02-27", specs: { chip: "骁龙8至尊版", screen: "6.73英寸 OLED", battery: "6000mAh", charging: "90W", camera: "50MP+50MP+50MP", os: "HyperOS 2" }, tagline: "徕卡影像 · 极致光学" },
+  { id: "4", brand: "Xiaomi", model: "小米 15 Pro", price: 4999, releaseDate: "2024-10-29", specs: { chip: "骁龙8至尊版", screen: "6.73英寸 OLED", battery: "5400mAh", charging: "120W", camera: "50MP+50MP+50MP", os: "HyperOS 2" }, tagline: "骁龙8至尊版 · 2K屏" },
+  { id: "5", brand: "Samsung", model: "Galaxy S25 Ultra", price: 9699, releaseDate: "2025-01-23", specs: { chip: "骁龙8至尊版", screen: "6.9英寸 OLED", battery: "5000mAh", charging: "45W", camera: "200MP+50MP+10MP+10MP", os: "One UI 7" }, tagline: "钛金属设计 · 2亿像素" },
+  { id: "6", brand: "Samsung", model: "Galaxy S25+", price: 7999, releaseDate: "2025-01-23", specs: { chip: "骁龙8至尊版", screen: "6.7英寸 OLED", battery: "4900mAh", charging: "45W", camera: "50MP+12MP+10MP", os: "One UI 7" }, tagline: "AI智能 · 顶级屏幕" },
+  { id: "7", brand: "Huawei", model: "Mate 70 Pro+", price: 8499, releaseDate: "2024-11-26", specs: { chip: "麒麟9020", screen: "6.9英寸 OLED", battery: "5700mAh", charging: "100W", camera: "50MP+48MP+40MP", os: "HarmonyOS NEXT" }, tagline: "鸿蒙NEXT · 卫星通信" },
+  { id: "8", brand: "Huawei", model: "Mate 70 Pro", price: 6999, releaseDate: "2024-11-26", specs: { chip: "麒麟9000S", screen: "6.9英寸 OLED", battery: "5500mAh", charging: "88W", camera: "50MP+48MP+40MP", os: "HarmonyOS NEXT" }, tagline: "纯血鸿蒙 · 自研芯片" },
+  { id: "9", brand: "OnePlus", model: "一加 13", price: 4499, releaseDate: "2024-11-01", specs: { chip: "骁龙8至尊版", screen: "6.82英寸 OLED", battery: "6000mAh", charging: "100W", camera: "50MP+50MP+50MP", os: "ColorOS 15" }, tagline: "骁龙8至尊版 · 游戏旗舰" },
+  { id: "10", brand: "OnePlus", model: "一加 13T", price: 3499, releaseDate: "2025-04-25", specs: { chip: "骁龙8 Gen3", screen: "6.3英寸 OLED", battery: "5500mAh", charging: "80W", camera: "50MP+8MP", os: "ColorOS 15" }, tagline: "小屏旗舰 · 性能怪兽" },
+  { id: "11", brand: "OPPO", model: "Find X8 Pro", price: 5299, releaseDate: "2024-10-24", specs: { chip: "天玑9400", screen: "6.78英寸 OLED", battery: "5910mAh", charging: "80W", camera: "50MP+50MP+50MP", os: "ColorOS 15" }, tagline: "天玑9400 · 影像大师" },
+  { id: "12", brand: "OPPO", model: "Find X8", price: 4199, releaseDate: "2024-10-24", specs: { chip: "天玑9400", screen: "6.59英寸 OLED", battery: "5630mAh", charging: "80W", camera: "50MP+50MP", os: "ColorOS 15" }, tagline: "无影抓拍 · 轻薄旗舰" },
+  { id: "13", brand: "vivo", model: "X200 Ultra", price: 5999, releaseDate: "2025-04-20", specs: { chip: "骁龙8至尊版", screen: "6.8英寸 OLED", battery: "5500mAh", charging: "90W", camera: "50MP+50MP+200MP", os: "OriginOS 5" }, tagline: "蔡司影像 · 演唱会神器" },
+  { id: "14", brand: "vivo", model: "X200 Pro", price: 4999, releaseDate: "2024-10-14", specs: { chip: "天玑9400", screen: "6.78英寸 OLED", battery: "6000mAh", charging: "90W", camera: "50MP+50MP+200MP", os: "OriginOS 5" }, tagline: "蓝晶×天玑 · 影像旗舰" },
+  { id: "15", brand: "Redmi", model: "K80 Pro", price: 3299, releaseDate: "2024-11-27", specs: { chip: "骁龙8 Gen3", screen: "6.67英寸 OLED", battery: "6000mAh", charging: "120W", camera: "50MP+8MP+2MP", os: "HyperOS 2" }, tagline: "骁龙8 Gen3 · 游戏神机" },
+  { id: "16", brand: "Redmi", model: "K80", price: 2499, releaseDate: "2024-11-27", specs: { chip: "骁龙8 Gen2", screen: "6.67英寸 OLED", battery: "6550mAh", charging: "90W", camera: "50MP+8MP", os: "HyperOS 2" }, tagline: "6550mAh · 续航怪兽" },
+  { id: "17", brand: "realme", model: "GT7 Pro", price: 3599, releaseDate: "2024-11-04", specs: { chip: "骁龙8至尊版", screen: "6.78英寸 OLED", battery: "6500mAh", charging: "120W", camera: "50MP+8MP", os: "realme UI 6" }, tagline: "骁龙8至尊版 · 电竞屏" },
+  { id: "18", brand: "iQOO", model: "13", price: 3999, releaseDate: "2024-10-30", specs: { chip: "骁龙8至尊版", screen: "6.82英寸 OLED", battery: "6150mAh", charging: "120W", camera: "50MP+50MP", os: "OriginOS 5" }, tagline: "电竞旗舰 · 自研芯片" },
+  { id: "19", brand: "Honor", model: "Magic7 Pro", price: 5699, releaseDate: "2024-10-30", specs: { chip: "骁龙8至尊版", screen: "6.8英寸 OLED", battery: "5850mAh", charging: "100W", camera: "50MP+50MP+50MP", os: "MagicOS 9" }, tagline: "AI智能 · 鹰眼相机" },
+  { id: "20", brand: "Nubia", model: "Z70 Ultra", price: 4599, releaseDate: "2025-05-15", specs: { chip: "骁龙8至尊版", screen: "6.8英寸 OLED", battery: "6000mAh", charging: "80W", camera: "50MP+50MP+50MP", os: "MyOS 15" }, tagline: "真全面屏 · 影像旗舰" },
+  { id: "21", brand: "Meizu", model: "21 Pro", price: 3999, releaseDate: "2024-03-01", specs: { chip: "骁龙8 Gen3", screen: "6.79英寸 OLED", battery: "5050mAh", charging: "80W", camera: "50MP+13MP+10MP", os: "Flyme 11" }, tagline: "单手大屏 · Flyme经典" },
+  { id: "22", brand: "Huawei", model: "Mate X6", price: 12999, releaseDate: "2024-11-26", specs: { chip: "麒麟9100", screen: "7.93英寸 折叠", battery: "5200mAh", charging: "66W", camera: "50MP+48MP+40MP", os: "HarmonyOS NEXT" }, tagline: "折叠旗舰 · 轻薄可靠" },
+  { id: "23", brand: "Samsung", model: "Galaxy Z Fold6", price: 13999, releaseDate: "2024-07-24", specs: { chip: "骁龙8 Gen3", screen: "7.6英寸 折叠", battery: "4400mAh", charging: "25W", camera: "50MP+12MP+10MP", os: "One UI 7" }, tagline: "折叠大屏 · AI生产力" },
+  { id: "24", brand: "vivo", model: "X200 Pro mini", price: 4299, releaseDate: "2024-10-14", specs: { chip: "天玑9400", screen: "6.31英寸 OLED", battery: "5700mAh", charging: "90W", camera: "50MP+50MP+50MP", os: "OriginOS 5" }, tagline: "小屏旗舰 · 大电池" },
+];
+
+// 手机数据映射
+const phonesData = rawPhonesData.map(p => ({
+  ...p,
+  brandCN: BRAND_CN_MAP[p.brand] || p.brand,
+}));
+
+export default function PhoneDetailRoute({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const [id, setId] = useState<string>("");
-  const [hasHeroTransition, setHasHeroTransition] = useState(false);
-  const [currentCategory, setCurrentCategory] = useState<RankingType>("comprehensive");
-  const [isReturning, setIsReturning] = useState(false);
-  const contentControls = useAnimation();
-  const { state: heroState } = useHeroTransition();
+  const [phone, setPhone] = useState<typeof phonesData[0] | null>(null);
 
   useEffect(() => {
     params.then(({ id }) => {
       setId(id);
-      // 检查是否有 Hero 转场状态
-      const persisted = loadPersistedHeroState();
-      if (persisted && persisted.targetPhoneId === id) {
-        setHasHeroTransition(true);
-        // 从持久化状态恢复榜单维度
-        if (persisted.phoneData?.scoreLabel) {
-          const category = RANKING_CATEGORIES.find(
-            (c) => c.label === persisted.phoneData?.scoreLabel
-          );
-          if (category) {
-            setCurrentCategory(category.id);
-          }
-        }
-      }
+      const foundPhone = phonesData.find(p => p.id === id);
+      setPhone(foundPhone || null);
     });
   }, [params]);
 
-  // 监听返回状态
-  useEffect(() => {
-    if (heroState.phase === "returning") {
-      setIsReturning(true);
-      // 内容区向下淡出
-      contentControls.start({
-        opacity: 0,
-        y: 40,
-        transition: { duration: 0.25, ease: [0.4, 0, 1, 1] },
-      });
-    }
-  }, [heroState.phase, contentControls]);
-
-  // 从 mock 数据中获取手机信息
-  const phone = useMemo(() => {
-    if (!id) return null;
-    for (const category of Object.keys(MOCK_RANKINGS) as RankingType[]) {
-      const found = MOCK_RANKINGS[category].find((p) => p.id === id);
-      if (found) return found;
-    }
-    return null;
-  }, [id]);
-
-  const themeColor = phone ? getPhonePrimaryColor(phone.brand) : "#00D9FF";
-
   if (!id) return null;
 
-  // 如果没有找到手机数据，显示基础信息
-  const displayPhone: PhoneRanking = phone || {
+  // 如果没有找到手机数据，显示默认信息
+  const displayPhone = phone || {
     id,
     brand: "品牌",
+    brandCN: "品牌",
     model: `手机型号 #${id}`,
-    priceCny: 5999,
-    rank: 1,
-    screenType: "flat",
-    imageUrl: null,
-    scores: {
-      overall: 9.2,
-      performance: 9.5,
-      screen: 9.0,
-      battery: 8.5,
-      camera: 9.3,
-      buildQuality: 9.1,
-      appearance: 8.8,
-      valueForMoney: 8.2,
-      userExperience: 9.0,
-      heat: 8.7,
-      discussion: 8.9,
+    price: 5999,
+    releaseDate: "2025-01-01",
+    specs: {
+      chip: "未知",
+      screen: "未知",
+      battery: "未知",
+      charging: "未知",
+      camera: "未知",
+      os: "未知",
     },
-    colorOptions: [
-      { id: "default", name: "默认色", hex: "#00D9FF", isDefault: true },
-    ],
+    tagline: "敬请期待",
+  };
+
+  // 格式化价格显示
+  const formatPrice = (price: number) => {
+    return `¥${price.toLocaleString()} 起`;
+  };
+
+  // 格式化发布日期
+  const formatReleaseDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toISOString().split('T')[0];
   };
 
   return (
-    <div className="min-h-screen bg-[#0f111a]">
-      {/* 头部区域 - Hero 转场目标 */}
-      <PhoneDetailHeader phoneId={id} />
-
-      {/* 内容区域 - 阶段二：从底部滑入 / 返回时向下淡出 */}
-      <motion.div
-        className="px-4 py-6 max-w-4xl mx-auto"
-        initial={{
-          opacity: 0,
-          y: 40,
-        }}
-        animate={isReturning ? contentControls : {
-          opacity: 1,
-          y: 0,
-        }}
-        transition={{
-          duration: 0.3,
-          delay: hasHeroTransition ? 0.3 : 0,
-          ease: [0.4, 0, 0.2, 1],
-        }}
-      >
-        {/* 主体内容：雷达图 + 维度详情 */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* 左侧：雷达图 */}
-          <motion.div
-            className="bg-[#151821] rounded-xl border border-white/5 p-4"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={isReturning ? { opacity: 0, scale: 0.95 } : { opacity: 1, scale: 1 }}
-            transition={{
-              duration: 0.4,
-              delay: hasHeroTransition ? 0.35 : 0.05,
-              ease: [0.4, 0, 0.2, 1],
-            }}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-white/80 font-ranking-cn">
-                多维度评分
-              </h3>
-              <Badge
-                variant="secondary"
-                className="text-[10px] bg-white/5 text-white/50 border-white/[0.06]"
-              >
-                {RANKING_CATEGORIES.find((c) => c.id === currentCategory)?.label}
-              </Badge>
-            </div>
-            <ScoreRadarChart
-              scores={displayPhone.scores}
-              currentCategory={currentCategory}
-              themeColor={themeColor}
-            />
-          </motion.div>
-
-          {/* 右侧：当前榜单维度详情 */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={isReturning ? { opacity: 0, x: 20 } : { opacity: 1, x: 0 }}
-            transition={{
-              duration: 0.4,
-              delay: hasHeroTransition ? 0.4 : 0.1,
-              ease: [0.4, 0, 0.2, 1],
-            }}
-          >
-            <CategoryDetailPanel
-              phone={displayPhone}
-              category={currentCategory}
-              themeColor={themeColor}
-            />
-          </motion.div>
-        </div>
-
-        {/* Tabs 区域：参数 / 评价 / 好价 */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={isReturning ? { opacity: 0, y: 20 } : { opacity: 1, y: 0 }}
-          transition={{
-            duration: 0.4,
-            delay: hasHeroTransition ? 0.45 : 0.15,
-            ease: [0.4, 0, 0.2, 1],
-          }}
-        >
-          <Tabs defaultValue="specs" className="w-full">
-            <TabsList className="w-full bg-[#151821] border border-white/5 h-11">
-              <TabsTrigger
-                value="specs"
-                className="flex-1 data-[state=active]:bg-white/10 data-[state=active]:text-white text-xs font-ranking-cn"
-              >
-                参数规格
-              </TabsTrigger>
-              <TabsTrigger
-                value="reviews"
-                className="flex-1 data-[state=active]:bg-white/10 data-[state=active]:text-white text-xs font-ranking-cn"
-              >
-                用户评价
-              </TabsTrigger>
-              <TabsTrigger
-                value="deals"
-                className="flex-1 data-[state=active]:bg-white/10 data-[state=active]:text-white text-xs font-ranking-cn"
-              >
-                好价信息
-              </TabsTrigger>
-            </TabsList>
-
-            {/* 参数规格 */}
-            <TabsContent value="specs" className="mt-4">
-              <Card className="bg-[#151821] border-white/5">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm text-white/70 font-ranking-cn">
-                    基本参数
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-4">
-                    <SpecItem label="品牌" value={displayPhone.brand} />
-                    <SpecItem label="型号" value={displayPhone.model} />
-                    <SpecItem label="价格" value={`¥${displayPhone.priceCny?.toLocaleString() || "-"}`} />
-                    <SpecItem label="屏幕类型" value={displayPhone.screenType === "foldable" ? "折叠屏" : displayPhone.screenType === "curved" ? "曲面屏" : displayPhone.screenType === "waterfall" ? "瀑布屏" : "直屏"} />
-                    <SpecItem label="综合评分" value={displayPhone.scores.overall.toFixed(1)} themeColor={themeColor} />
-                    <SpecItem label="性能评分" value={displayPhone.scores.performance.toFixed(1)} />
-                    <SpecItem label="影像评分" value={displayPhone.scores.camera.toFixed(1)} />
-                    <SpecItem label="续航评分" value={displayPhone.scores.battery.toFixed(1)} />
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* 用户评价 - 胶囊评论卡片 */}
-            <TabsContent value="reviews" className="mt-4">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-white/80 font-ranking-cn">
-                    用户评价
-                  </h3>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-xs text-white/40 hover:text-white/70 h-7"
-                  >
-                    查看全部
-                    <ChevronRight className="size-3 ml-1" />
-                  </Button>
-                </div>
-                <ReviewCapsuleList reviews={MOCK_REVIEWS} themeColor={themeColor} />
-              </div>
-            </TabsContent>
-
-            {/* 好价信息 */}
-            <TabsContent value="deals" className="mt-4">
-              <Card className="bg-[#151821] border-white/5">
-                <CardContent className="py-8 text-center">
-                  <ShoppingCart className="size-8 text-white/20 mx-auto mb-3" />
-                  <p className="text-sm text-white/40 font-ranking-cn mb-1">
-                    暂无好价信息
-                  </p>
-                  <p className="text-xs text-white/20 font-ranking-cn">
-                    连接电商平台后将展示实时价格
-                  </p>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </motion.div>
-      </motion.div>
-    </div>
-  );
-}
-
-// ============================================================================
-// 参数项组件
-// ============================================================================
-
-function SpecItem({
-  label,
-  value,
-  themeColor,
-}: {
-  label: string;
-  value: string;
-  themeColor?: string;
-}) {
-  return (
-    <div className="flex items-center justify-between py-2 border-b border-white/5">
-      <span className="text-xs text-white/40 font-ranking-cn">{label}</span>
-      <span
-        className="text-sm text-white/80 font-ranking-cn"
-        style={themeColor ? { color: themeColor } : undefined}
-      >
-        {value}
-      </span>
-    </div>
+    <PhoneDetailPage
+      brand={displayPhone.brandCN}
+      model={displayPhone.model}
+      tagline={displayPhone.tagline}
+      releaseDate={formatReleaseDate(displayPhone.releaseDate)}
+      startingPrice={formatPrice(displayPhone.price)}
+    />
   );
 }

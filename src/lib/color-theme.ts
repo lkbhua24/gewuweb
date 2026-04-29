@@ -818,3 +818,724 @@ export function processRankingColors(
   // 2. 应用连续相近色降饱和
   return applyColorOrderConstraint(rawColors, config);
 }
+
+// ============================================================================
+// 模块一: 动态主题色系统优化 - 情绪属性分析与完整配色方案
+// ============================================================================
+
+/**
+ * 色彩情绪属性
+ */
+export interface ColorEmotion {
+  /** 冷暖属性: warm(暖) | cool(冷) | neutral(中性) */
+  temperature: "warm" | "cool" | "neutral";
+  /** 饱和度属性: saturated(饱和) | muted(淡雅) | monochrome(单色) */
+  saturation: "saturated" | "muted" | "monochrome";
+  /** 亮度属性: bright(明亮) | medium(中等) | dark(暗沉) */
+  brightness: "bright" | "medium" | "dark";
+  /** 情绪标签数组 */
+  moodTags: string[];
+}
+
+/**
+ * 完整配色方案
+ */
+export interface ColorScheme {
+  /** 页面主色调 (用于按钮、强调文字) */
+  primary: string;
+  /** 次要色 (用于次级强调) */
+  secondary: string;
+  /** 高光色 (用于发光效果、边框) */
+  highlight: string;
+  /** 背景渐变起点 */
+  backgroundFrom: string;
+  /** 背景渐变终点 */
+  backgroundTo: string;
+  /** 点缀色 (用于小面积强调、图标) */
+  accent: string;
+  /** 文字主色 */
+  textPrimary: string;
+  /** 文字次要色 */
+  textSecondary: string;
+}
+
+/**
+ * 手机配色档案 (增强版)
+ */
+export interface PhoneColorScheme {
+  /** 机型标识 */
+  phoneId: string;
+  brand: string;
+  model: string;
+  /** 机身颜色名称 */
+  bodyColorName: string;
+  /** 机身颜色HEX */
+  bodyColor: string;
+  /** 情绪属性 */
+  emotion: ColorEmotion;
+  /** 完整配色方案 */
+  scheme: ColorScheme;
+  /** CSS 变量对象 */
+  cssVars: Record<string, string>;
+}
+
+/**
+ * 分析色彩情绪属性
+ * 
+ * 冷暖判断基于色相:
+ * - 暖色: 0-60° (红-黄), 300-360° (紫红)
+ * - 冷色: 60-180° (黄绿-青), 180-300° (蓝-紫)
+ * - 中性: 灰度或近灰度
+ * 
+ * 饱和度判断:
+ * - saturated: S > 50%
+ * - muted: 20% < S <= 50%
+ * - monochrome: S <= 20%
+ */
+export function analyzeColorEmotion(hex: string): ColorEmotion {
+  const hsb = hexToHsb(hex);
+  if (!hsb) {
+    return {
+      temperature: "neutral",
+      saturation: "monochrome",
+      brightness: "medium",
+      moodTags: ["经典", "稳重"],
+    };
+  }
+
+  const { h, s, b } = hsb;
+
+  // 冷暖判断
+  let temperature: ColorEmotion["temperature"];
+  if (s <= 15) {
+    temperature = "neutral"; // 灰度/近灰度
+  } else if ((h >= 0 && h < 60) || (h >= 300 && h <= 360)) {
+    temperature = "warm";
+  } else if ((h >= 60 && h < 180) || (h >= 180 && h < 300)) {
+    temperature = "cool";
+  } else {
+    temperature = "neutral";
+  }
+
+  // 饱和度判断
+  let saturation: ColorEmotion["saturation"];
+  if (s > 50) {
+    saturation = "saturated";
+  } else if (s > 20) {
+    saturation = "muted";
+  } else {
+    saturation = "monochrome";
+  }
+
+  // 亮度判断
+  let brightness: ColorEmotion["brightness"];
+  if (b > 70) {
+    brightness = "bright";
+  } else if (b > 40) {
+    brightness = "medium";
+  } else {
+    brightness = "dark";
+  }
+
+  // 生成情绪标签
+  const moodTags = generateMoodTags(temperature, saturation, brightness, h);
+
+  return { temperature, saturation, brightness, moodTags };
+}
+
+/**
+ * 根据色彩属性生成情绪标签
+ */
+function generateMoodTags(
+  temp: ColorEmotion["temperature"],
+  sat: ColorEmotion["saturation"],
+  bright: ColorEmotion["brightness"],
+  hue: number
+): string[] {
+  const tags: string[] = [];
+
+  // 基于冷暖
+  if (temp === "warm") tags.push("温暖", "活力");
+  else if (temp === "cool") tags.push("冷静", "科技");
+  else tags.push("经典", "稳重");
+
+  // 基于饱和度
+  if (sat === "saturated") tags.push("鲜明");
+  else if (sat === "muted") tags.push("雅致");
+  else tags.push("简约");
+
+  // 基于亮度
+  if (bright === "bright") tags.push("轻盈");
+  else if (bright === "dark") tags.push("深邃");
+
+  // 基于具体色相的细分
+  if (hue >= 350 || hue < 15) tags.push("热情");
+  else if (hue >= 15 && hue < 45) tags.push("活力");
+  else if (hue >= 45 && hue < 75) tags.push("清新");
+  else if (hue >= 75 && hue < 105) tags.push("自然");
+  else if (hue >= 105 && hue < 150) tags.push("生机");
+  else if (hue >= 150 && hue < 195) tags.push("宁静");
+  else if (hue >= 195 && hue < 240) tags.push("智慧");
+  else if (hue >= 240 && hue < 285) tags.push("神秘");
+  else if (hue >= 285 && hue < 330) tags.push("优雅");
+
+  return [...new Set(tags)]; // 去重
+}
+
+/**
+ * 计算互补色 (用于点缀色)
+ */
+export function getComplementaryColor(hex: string): string {
+  const hsb = hexToHsb(hex);
+  if (!hsb) return "#FF6B35";
+
+  const complementaryHue = (hsb.h + 180) % 360;
+  return hsbToHex({
+    h: complementaryHue,
+    s: Math.min(100, hsb.s + 20),
+    b: Math.min(100, hsb.b + 10),
+  });
+}
+
+/**
+ * 计算分裂互补色 (用于高光色)
+ */
+export function getSplitComplementary(hex: string): string[] {
+  const hsb = hexToHsb(hex);
+  if (!hsb) return ["#00D4AA", "#A855F7"];
+
+  const hue1 = (hsb.h + 150) % 360;
+  const hue2 = (hsb.h + 210) % 360;
+
+  return [
+    hsbToHex({ h: hue1, s: Math.min(100, hsb.s + 10), b: Math.min(100, hsb.b + 5) }),
+    hsbToHex({ h: hue2, s: Math.min(100, hsb.s + 10), b: Math.min(100, hsb.b + 5) }),
+  ];
+}
+
+/**
+ * 生成背景渐变
+ * 根据机身颜色智能生成和谐的渐变
+ */
+export function generateBackgroundGradient(
+  bodyColor: string,
+  emotion: ColorEmotion
+): { from: string; to: string } {
+  const hsb = hexToHsb(bodyColor);
+  if (!hsb) {
+    return { from: "#0f111a", to: "#080c14" };
+  }
+
+  const { temperature, brightness } = emotion;
+
+  // 根据情绪调整背景策略
+  if (brightness === "dark") {
+    // 深色机身: 深空黑 + 边缘光
+    const edgeHue = (hsb.h + 30) % 360;
+    return {
+      from: "#1a1a2e",
+      to: hsbToHex({ h: edgeHue, s: 30, b: 15 }),
+    };
+  }
+
+  if (temperature === "warm") {
+    // 暖色机身: 暖灰渐变
+    return {
+      from: hsbToHex({ h: hsb.h, s: 8, b: 92 }),
+      to: hsbToHex({ h: hsb.h, s: 12, b: 85 }),
+    };
+  }
+
+  if (temperature === "cool") {
+    // 冷色机身: 冰蓝/冷灰渐变
+    return {
+      from: hsbToHex({ h: hsb.h, s: 10, b: 95 }),
+      to: hsbToHex({ h: hsb.h, s: 15, b: 88 }),
+    };
+  }
+
+  // 中性色: 通用高级灰
+  return {
+    from: "#f8f9fa",
+    to: "#e9ecef",
+  };
+}
+
+/**
+ * 生成完整配色方案
+ */
+export function generateCompleteColorScheme(bodyColor: string): ColorScheme {
+  const emotion = analyzeColorEmotion(bodyColor);
+  const hsb = hexToHsb(bodyColor) || { h: 0, s: 0, b: 50 };
+
+  // 主色: 稍微提升饱和度用于UI强调
+  const primary = hsbToHex({
+    h: hsb.h,
+    s: Math.min(100, hsb.s + 15),
+    b: Math.min(100, hsb.b + 5),
+  });
+
+  // 次要色: 同色系较浅版本
+  const secondary = hsbToHex({
+    h: hsb.h,
+    s: Math.max(0, hsb.s - 20),
+    b: Math.min(100, hsb.b + 15),
+  });
+
+  // 高光色: 分裂互补色之一
+  const splitComps = getSplitComplementary(bodyColor);
+  const highlight = splitComps[0];
+
+  // 背景渐变
+  const bgGradient = generateBackgroundGradient(bodyColor, emotion);
+
+  // 点缀色: 互补色
+  const accent = getComplementaryColor(bodyColor);
+
+  // 文字颜色: 根据背景亮度决定
+  const isLightBackground = emotion.brightness === "bright";
+  const textPrimary = isLightBackground ? "#1a1a2e" : "#f8f9fa";
+  const textSecondary = isLightBackground ? "#495057" : "#adb5bd";
+
+  return {
+    primary,
+    secondary,
+    highlight,
+    backgroundFrom: bgGradient.from,
+    backgroundTo: bgGradient.to,
+    accent,
+    textPrimary,
+    textSecondary,
+  };
+}
+
+/**
+ * 生成手机配色档案
+ */
+export function createPhoneColorScheme(
+  phoneId: string,
+  brand: string,
+  model: string,
+  bodyColorName: string,
+  bodyColor: string
+): PhoneColorScheme {
+  const emotion = analyzeColorEmotion(bodyColor);
+  const scheme = generateCompleteColorScheme(bodyColor);
+
+  // 生成 CSS 变量
+  const cssVars: Record<string, string> = {
+    "--phone-primary": scheme.primary,
+    "--phone-secondary": scheme.secondary,
+    "--phone-highlight": scheme.highlight,
+    "--phone-accent": scheme.accent,
+    "--phone-bg-from": scheme.backgroundFrom,
+    "--phone-bg-to": scheme.backgroundTo,
+    "--phone-text-primary": scheme.textPrimary,
+    "--phone-text-secondary": scheme.textSecondary,
+    "--phone-emotion-temp": emotion.temperature,
+    "--phone-emotion-sat": emotion.saturation,
+    "--phone-emotion-bright": emotion.brightness,
+  };
+
+  return {
+    phoneId,
+    brand,
+    model,
+    bodyColorName,
+    bodyColor,
+    emotion,
+    scheme,
+    cssVars,
+  };
+}
+
+// ============================================================================
+// 三星 Galaxy S25 Ultra 配色映射示例
+// ============================================================================
+
+export interface PhoneColorMapping {
+  bodyColorName: string;
+  bodyColor: string;
+  pagePrimary: string;
+  backgroundGradient: string;
+  accentColor: string;
+  moodTags: string[];
+}
+
+export const GALAXY_S25_ULTRA_COLORS: PhoneColorMapping[] = [
+  {
+    bodyColorName: "钛灰",
+    bodyColor: "#E8E4E0",
+    pagePrimary: "#C5C0BC",
+    backgroundGradient: "linear-gradient(180deg, #E8E4E0 0%, #C5C0BC 100%)",
+    accentColor: "#FF6B35",
+    moodTags: ["沉稳", "商务"],
+  },
+  {
+    bodyColorName: "钛蓝",
+    bodyColor: "#D6E4F0",
+    pagePrimary: "#A8C8EC",
+    backgroundGradient: "linear-gradient(180deg, #D6E4F0 0%, #A8C8EC 100%)",
+    accentColor: "#00D4AA",
+    moodTags: ["冷静", "科技"],
+  },
+  {
+    bodyColorName: "钛黑",
+    bodyColor: "#2A2A2A",
+    pagePrimary: "#1A1A1A",
+    backgroundGradient: "linear-gradient(180deg, #2A2A2A 0%, #1A1A1A 100%)",
+    accentColor: "#A855F7",
+    moodTags: ["神秘", "高端"],
+  },
+  {
+    bodyColorName: "钛雾金",
+    bodyColor: "#F5E6D3",
+    pagePrimary: "#E8D5B7",
+    backgroundGradient: "linear-gradient(180deg, #F5E6D3 0%, #E8D5B7 100%)",
+    accentColor: "#FFD700",
+    moodTags: ["奢华", "温暖"],
+  },
+];
+
+/**
+ * 根据机身颜色名称获取 S25 Ultra 配色方案
+ */
+export function getGalaxyS25UltraScheme(colorName: string): PhoneColorScheme | null {
+  const mapping = GALAXY_S25_ULTRA_COLORS.find(
+    (c) => c.bodyColorName === colorName
+  );
+  if (!mapping) return null;
+
+  return createPhoneColorScheme(
+    "s25-ultra",
+    "Samsung",
+    "Galaxy S25 Ultra",
+    mapping.bodyColorName,
+    mapping.bodyColor
+  );
+}
+
+// ============================================================================
+// 扩展品牌色映射 (支持更多机型配色)
+// ============================================================================
+
+/**
+ * 机型特定配色配置
+ * 用于存储特定机型不同机身颜色的配色方案
+ */
+export interface ModelColorConfig {
+  brand: string;
+  model: string;
+  colors: {
+    colorName: string;
+    hex: string;
+    isDefault?: boolean;
+  }[];
+}
+
+/**
+ * 预设机型配色数据库
+ */
+export const PHONE_MODEL_COLORS: Record<string, ModelColorConfig> = {
+  "samsung-galaxy-s25-ultra": {
+    brand: "Samsung",
+    model: "Galaxy S25 Ultra",
+    colors: [
+      { colorName: "钛灰", hex: "#E8E4E0", isDefault: true },
+      { colorName: "钛蓝", hex: "#D6E4F0" },
+      { colorName: "钛黑", hex: "#2A2A2A" },
+      { colorName: "钛雾金", hex: "#F5E6D3" },
+    ],
+  },
+  "apple-iphone-16-pro": {
+    brand: "Apple",
+    model: "iPhone 16 Pro",
+    colors: [
+      { colorName: "沙漠钛金属", hex: "#C4B5A0", isDefault: true },
+      { colorName: "原色钛金属", hex: "#A8A29E" },
+      { colorName: "白色钛金属", hex: "#F5F5F0" },
+      { colorName: "黑色钛金属", hex: "#2D2D2D" },
+    ],
+  },
+  "xiaomi-15-ultra": {
+    brand: "Xiaomi",
+    model: "15 Ultra",
+    colors: [
+      { colorName: "经典黑银", hex: "#1A1A1A", isDefault: true },
+      { colorName: "松柏绿", hex: "#2D5016" },
+      { colorName: "白色", hex: "#FAFAFA" },
+    ],
+  },
+};
+
+/**
+ * 根据机型ID获取配色配置
+ */
+export function getModelColorConfig(modelId: string): ModelColorConfig | null {
+  return PHONE_MODEL_COLORS[modelId] || null;
+}
+
+/**
+ * 获取机型的所有配色方案
+ */
+export function getAllColorSchemesForModel(
+  modelId: string
+): PhoneColorScheme[] {
+  const config = getModelColorConfig(modelId);
+  if (!config) return [];
+
+  return config.colors.map((color) =>
+    createPhoneColorScheme(
+      modelId,
+      config.brand,
+      config.model,
+      color.colorName,
+      color.hex
+    )
+  );
+}
+
+// ============================================================================
+// 动态应用规则 - 各层透明度与效果规范
+// ============================================================================
+
+/**
+ * 动态主题应用规则
+ * 
+ * 应用层级规范:
+ * - 背景层: 主色 15% 透明度 + 白色/黑色基底
+ * - 卡片层: 主色 8% 透明度 + 背景模糊 20px
+ * - 文字层: 主色 100% 用于标题, 60% 用于正文
+ * - 高亮层: 辅色用于按钮、标签、进度条
+ * - 光效层: 高光色用于粒子、波纹、边框发光
+ */
+export interface DynamicThemeRules {
+  // 背景层
+  background: {
+    base: string;           // 基底颜色
+    overlay: string;        // 主色 15% 透明度叠加
+    gradient: string;       // 完整背景渐变
+  };
+  // 卡片层
+  card: {
+    background: string;     // 主色 8% 透明度
+    blur: string;           // backdrop-filter 值
+    border: string;         // 边框颜色
+  };
+  // 文字层
+  text: {
+    primary: string;        // 主色 100%
+    secondary: string;      // 主色 60%
+    tertiary: string;       // 主色 40%
+  };
+  // 高亮层
+  highlight: {
+    button: string;         // 辅色按钮背景
+    buttonText: string;     // 按钮文字色
+    tag: string;            // 标签背景
+    tagText: string;        // 标签文字
+    progress: string;       // 进度条颜色
+  };
+  // 光效层
+  glow: {
+    particle: string;       // 粒子颜色
+    ripple: string;         // 波纹颜色
+    border: string;         // 边框发光
+    shadow: string;         // 阴影发光
+  };
+}
+
+/**
+ * 生成动态主题应用规则
+ */
+export function generateDynamicThemeRules(
+  scheme: ColorScheme,
+  isDarkMode: boolean = true
+): DynamicThemeRules {
+  const primaryRgb = hexToRgb(scheme.primary);
+  const secondaryRgb = hexToRgb(scheme.secondary);
+  const highlightRgb = hexToRgb(scheme.highlight);
+
+  const primary = primaryRgb
+    ? `${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}`
+    : "128, 128, 128";
+  const secondary = secondaryRgb
+    ? `${secondaryRgb.r}, ${secondaryRgb.g}, ${secondaryRgb.b}`
+    : "128, 128, 128";
+  const highlight = highlightRgb
+    ? `${highlightRgb.r}, ${highlightRgb.g}, ${highlightRgb.b}`
+    : "128, 128, 128";
+
+  // 判断基底颜色（根据背景亮度）
+  const bgRgb = hexToRgb(scheme.backgroundFrom);
+  const bgLuminance = bgRgb
+    ? (0.299 * bgRgb.r + 0.587 * bgRgb.g + 0.114 * bgRgb.b) / 255
+    : 0.5;
+  const baseColor = bgLuminance > 0.5 ? "255, 255, 255" : "8, 12, 20";
+
+  return {
+    background: {
+      base: `rgb(${baseColor})`,
+      overlay: `rgba(${primary}, 0.15)`,
+      gradient: `linear-gradient(180deg, ${scheme.backgroundFrom} 0%, ${scheme.backgroundTo} 100%)`,
+    },
+    card: {
+      background: `rgba(${primary}, 0.08)`,
+      blur: "blur(20px)",
+      border: `1px solid rgba(${primary}, 0.12)`,
+    },
+    text: {
+      primary: scheme.primary,
+      secondary: `rgba(${primary}, 0.6)`,
+      tertiary: `rgba(${primary}, 0.4)`,
+    },
+    highlight: {
+      button: scheme.secondary,
+      buttonText: isDarkMode ? scheme.backgroundFrom : "#ffffff",
+      tag: `rgba(${secondary}, 0.2)`,
+      tagText: scheme.secondary,
+      progress: scheme.secondary,
+    },
+    glow: {
+      particle: scheme.highlight,
+      ripple: `rgba(${highlight}, 0.4)`,
+      border: `rgba(${highlight}, 0.5)`,
+      shadow: `0 0 20px rgba(${highlight}, 0.3), 0 0 40px rgba(${highlight}, 0.1)`,
+    },
+  };
+}
+
+/**
+ * 生成动态主题 CSS 变量
+ */
+export function generateDynamicThemeCssVars(
+  scheme: ColorScheme,
+  isDarkMode: boolean = true
+): Record<string, string> {
+  const rules = generateDynamicThemeRules(scheme, isDarkMode);
+
+  return {
+    // 背景层
+    "--dt-bg-base": rules.background.base,
+    "--dt-bg-overlay": rules.background.overlay,
+    "--dt-bg-gradient": rules.background.gradient,
+    // 卡片层
+    "--dt-card-bg": rules.card.background,
+    "--dt-card-blur": rules.card.blur,
+    "--dt-card-border": rules.card.border,
+    // 文字层
+    "--dt-text-primary": rules.text.primary,
+    "--dt-text-secondary": rules.text.secondary,
+    "--dt-text-tertiary": rules.text.tertiary,
+    // 高亮层
+    "--dt-highlight-button": rules.highlight.button,
+    "--dt-highlight-button-text": rules.highlight.buttonText,
+    "--dt-highlight-tag": rules.highlight.tag,
+    "--dt-highlight-tag-text": rules.highlight.tagText,
+    "--dt-highlight-progress": rules.highlight.progress,
+    // 光效层
+    "--dt-glow-particle": rules.glow.particle,
+    "--dt-glow-ripple": rules.glow.ripple,
+    "--dt-glow-border": rules.glow.border,
+    "--dt-glow-shadow": rules.glow.shadow,
+    // 过渡时间
+    "--dt-transition-duration": "800ms",
+    "--dt-transition-timing": "cubic-bezier(0.4, 0, 0.2, 1)",
+  };
+}
+
+/**
+ * 色彩呼吸动画关键帧 CSS
+ * 用于粒子颜色的渐变过渡效果
+ */
+export function generateBreathingKeyframes(
+  fromColor: string,
+  toColor: string
+): string {
+  return `
+@keyframes color-breathing {
+  0%, 100% {
+    color: ${fromColor};
+    box-shadow: 0 0 10px ${fromColor}40;
+  }
+  50% {
+    color: ${toColor};
+    box-shadow: 0 0 20px ${toColor}60;
+  }
+}
+
+@keyframes particle-color-shift {
+  0% {
+    background: ${fromColor};
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    background: ${toColor};
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  100% {
+    background: ${fromColor};
+    opacity: 0.6;
+    transform: scale(1);
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 5px ${fromColor}40, 0 0 10px ${fromColor}20;
+  }
+  50% {
+    box-shadow: 0 0 15px ${toColor}60, 0 0 30px ${toColor}30;
+  }
+}
+`;
+}
+
+// ============================================================================
+// 增强版配色档案（包含动态规则）
+// ============================================================================
+
+export interface EnhancedPhoneColorScheme extends PhoneColorScheme {
+  dynamicRules: DynamicThemeRules;
+  dynamicCssVars: Record<string, string>;
+  breathingKeyframes: string;
+}
+
+/**
+ * 创建增强版配色档案（包含动态规则）
+ */
+export function createEnhancedColorScheme(
+  phoneId: string,
+  brand: string,
+  model: string,
+  bodyColorName: string,
+  bodyColor: string,
+  isDarkMode: boolean = true
+): EnhancedPhoneColorScheme {
+  const baseScheme = createPhoneColorScheme(
+    phoneId,
+    brand,
+    model,
+    bodyColorName,
+    bodyColor
+  );
+
+  const dynamicRules = generateDynamicThemeRules(baseScheme.scheme, isDarkMode);
+  const dynamicCssVars = generateDynamicThemeCssVars(baseScheme.scheme, isDarkMode);
+  const breathingKeyframes = generateBreathingKeyframes(
+    baseScheme.scheme.highlight,
+    baseScheme.scheme.accent
+  );
+
+  return {
+    ...baseScheme,
+    dynamicRules,
+    dynamicCssVars: {
+      ...baseScheme.cssVars,
+      ...dynamicCssVars,
+    },
+    breathingKeyframes,
+  };
+}

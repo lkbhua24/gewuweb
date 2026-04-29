@@ -198,6 +198,46 @@
   --spacing-20: 5rem;
   --spacing-24: 6rem;
 
+  /* ============================================
+     设计系统 Token - Design System Tokens
+     ============================================ */
+
+  /* 色彩 - Colors */
+  --theme-primary: var(--primary);
+  --theme-primary-light: color-mix(in srgb, var(--primary) 20%, transparent);
+  --theme-accent: var(--accent);
+  --theme-bg-base: #FAFBFC;
+  --theme-bg-elevated: rgba(255, 255, 255, 0.8);
+  --theme-text-primary: #1A1A1A;
+  --theme-text-secondary: #666666;
+
+  /* 间距 - Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+
+  /* 圆角 - Radius */
+  --radius-theme-sm: 8px;
+  --radius-theme-md: 12px;
+  --radius-theme-lg: 16px;
+  --radius-theme-xl: 24px;
+
+  /* 阴影 - Shadows */
+  --shadow-theme-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-theme-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-theme-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-theme-glow: 0 0 20px var(--theme-primary-light);
+
+  /* 动画 - Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 300ms ease;
+  --transition-slow: 600ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ============================================
+     原有阴影系统
+     ============================================ */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
