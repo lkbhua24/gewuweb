@@ -56,7 +56,7 @@ export function VisualMoodBoard() {
 
       {/* 微粒子光效 */}
       <div className="fixed inset-0 z-10 pointer-events-none opacity-60">
-        <ParticleBackground themeColor={scheme.primary} density="high" speed={0.2} />
+        <ParticleBackground primaryColor={scheme.primary} particleCount={400} />
       </div>
 
       {/* 主内容 */}

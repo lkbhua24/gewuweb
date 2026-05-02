@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Share2, Scale } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 
 // ============================================================================
@@ -24,9 +24,6 @@ interface Phone3DShowcaseProps {
   colors?: PhoneColor[];
   defaultColorId?: string;
   onColorChange?: (color: PhoneColor) => void;
-  onFavoriteChange?: (isFavorite: boolean) => void;
-  onShare?: () => void;
-  onCompare?: () => void;
 }
 
 const DEFAULT_COLORS: PhoneColor[] = [
@@ -42,9 +39,6 @@ export function Phone3DShowcase({
   colors = DEFAULT_COLORS,
   defaultColorId,
   onColorChange,
-  onFavoriteChange,
-  onShare,
-  onCompare,
 }: Phone3DShowcaseProps) {
   const [selectedColor, setSelectedColor] = useState<PhoneColor>(
     colors.find((c) => c.id === defaultColorId) || colors[0]
@@ -56,8 +50,6 @@ export function Phone3DShowcase({
   const [mouseTilt, setMouseTilt] = useState({ x: 0, y: 0 });
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [isCompare, setIsCompare] = useState(false);
 
   // 颜色切换动画
   const handleColorChange = useCallback((color: PhoneColor) => {
@@ -76,12 +68,6 @@ export function Phone3DShowcase({
       }, 50);
     }, 300);
   }, [selectedColor.id, isFlipping, onColorChange]);
-
-  const handleFavorite = () => {
-    const newState = !isFavorite;
-    setIsFavorite(newState);
-    onFavoriteChange?.(newState);
-  };
 
   // 鼠标悬停跟随
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
@@ -231,35 +217,6 @@ export function Phone3DShowcase({
         </div>
       </div>
 
-      {/* 快捷操作按钮 - 响应式位置 */}
-      <div className="absolute bottom-4 sm:bottom-6 left-4 sm:left-6 flex gap-2 sm:gap-3">
-        <ActionButton
-          icon={Heart}
-          label="收藏"
-          isActive={isFavorite}
-          activeColor="#ef4444"
-          onClick={handleFavorite}
-          size="sm"
-        />
-        <ActionButton icon={Share2} label="分享" onClick={onShare} size="sm" />
-        <ActionButton
-          icon={Scale}
-          label="对比"
-          isActive={isCompare}
-          activeColor="#06b6d4"
-          onClick={() => {
-            setIsCompare(!isCompare);
-            onCompare?.();
-          }}
-          size="sm"
-        />
-      </div>
-
-      {/* 品牌型号信息 - 响应式 */}
-      <div className="absolute top-4 sm:top-6 left-4 sm:left-6">
-        <div className="text-xs sm:text-sm text-gray-400">{brand}</div>
-        <div className="text-base sm:text-xl font-bold text-white">{model}</div>
-      </div>
     </div>
   );
 }
@@ -268,7 +225,7 @@ export function Phone3DShowcase({
 // 手机正面组件 - 钛金属边框 + 磨砂玻璃背板
 // ============================================================================
 
-function PhoneFront({ color, highlight }: { color: string; highlight: string }) {
+const PhoneFront = memo(function PhoneFront({ color, highlight }: { color: string; highlight: string }) {
   return (
     <div
       className="relative w-[160px] h-[320px] sm:w-[180px] sm:h-[360px] lg:w-[200px] lg:h-[400px] rounded-[32px] sm:rounded-[36px] lg:rounded-[40px]"
@@ -383,13 +340,13 @@ function PhoneFront({ color, highlight }: { color: string; highlight: string }) 
       />
     </div>
   );
-}
+});
 
 // ============================================================================
 // 手机背面组件 - 摄像头模组微凸阴影 + 镜头反光
 // ============================================================================
 
-function PhoneBack({
+const PhoneBack = memo(function PhoneBack({
   color,
   highlight,
   isVisible,
@@ -514,10 +471,10 @@ function PhoneBack({
       </div>
     </div>
   );
-}
+});
 
 // 镜头组件（带反光点）
-function LensWithReflection() {
+const LensWithReflection = memo(function LensWithReflection() {
   return (
     <div
       className="rounded-full bg-black/80 relative overflow-hidden"
@@ -541,61 +498,7 @@ function LensWithReflection() {
       />
     </div>
   );
-}
-
-// ============================================================================
-// 快捷操作按钮组件
-// ============================================================================
-
-interface ActionButtonProps {
-  icon: React.ElementType;
-  label: string;
-  isActive?: boolean;
-  activeColor?: string;
-  onClick?: () => void;
-  size?: "sm" | "md";
-}
-
-function ActionButton({
-  icon: Icon,
-  label,
-  isActive = false,
-  activeColor = "#06b6d4",
-  onClick,
-  size = "md",
-}: ActionButtonProps) {
-  const sizeClasses = {
-    sm: "px-2.5 py-1.5 gap-1.5 text-xs",
-    md: "px-4 py-2 gap-2 text-sm",
-  };
-
-  const iconSizes = {
-    sm: "w-3.5 h-3.5",
-    md: "w-4 h-4",
-  };
-
-  return (
-    <motion.button
-      onClick={onClick}
-      className={cn(
-        "flex items-center rounded-xl backdrop-blur-sm transition-all",
-        "border font-medium",
-        sizeClasses[size],
-        isActive
-          ? "bg-white/20 border-white/40 text-white"
-          : "bg-black/40 border-white/10 text-gray-400 hover:bg-white/10 hover:text-white"
-      )}
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      style={{
-        boxShadow: isActive ? `0 0 15px ${activeColor}40` : "none",
-      }}
-    >
-      <Icon className={iconSizes[size]} style={{ color: isActive ? activeColor : undefined }} />
-      <span className="hidden sm:inline">{label}</span>
-    </motion.button>
-  );
-}
+});
 
 // ============================================================================
 // 演示组件
@@ -650,9 +553,6 @@ export function Phone3DShowcaseDemo() {
             <Phone3DShowcase
               colors={DEFAULT_COLORS}
               onColorChange={setCurrentColor}
-              onFavoriteChange={(isFav) => console.log("收藏:", isFav)}
-              onShare={() => console.log("分享")}
-              onCompare={() => console.log("对比")}
             />
           </motion.div>
 

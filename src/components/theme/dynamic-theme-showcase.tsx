@@ -361,11 +361,7 @@ export function DynamicThemeShowcase() {
 // ============================================================================
 
 function ParticleBackground({ particleColor }: { particleColor: string }) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const [mounted, setMounted] = useState(true);
 
   const particles = useMemo(() => {
     return [...Array(12)].map((_, i) => ({

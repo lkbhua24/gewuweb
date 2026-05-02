@@ -70,17 +70,8 @@ export function PriceChart({
 }: PriceChartProps) {
   const [timeRange, setTimeRange] = useState<TimeRange>("6m");
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const [isAnimating, setIsAnimating] = useState(animateOnLoad);
+  const [isAnimating, setIsAnimating] = useState(false);
   const chartRef = useRef<SVGSVGElement>(null);
-
-  // 监听 animateOnLoad 变化，触发动画
-  useEffect(() => {
-    if (animateOnLoad) {
-      setIsAnimating(true);
-      const timer = setTimeout(() => setIsAnimating(false), 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [animateOnLoad]);
 
   const data = externalData || DEFAULT_DATA[timeRange];
 
@@ -118,14 +109,6 @@ export function PriceChart({
     const closePath = `L ${getX(data.length - 1)} ${padding.top + chartHeight} L ${getX(0)} ${padding.top + chartHeight} Z`;
     return `${linePath} ${closePath}`;
   }, [data]);
-
-  // 动画路径（从左到右绘制）
-  const getAnimatedPath = (path: string) => {
-    const pathElement = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    pathElement.setAttribute("d", path);
-    const length = pathElement.getTotalLength();
-    return { length };
-  };
 
   // 格式化价格
   const formatPrice = (price: number) => `¥${price.toLocaleString()}`;

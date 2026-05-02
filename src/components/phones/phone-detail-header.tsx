@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { motion, useAnimation } from "framer-motion";
 import {
   loadPersistedHeroState,
@@ -24,11 +24,6 @@ interface PhoneDetailHeaderProps {
 }
 
 export function PhoneDetailHeader({ phoneId }: PhoneDetailHeaderProps) {
-  const [heroData, setHeroData] = useState<ReturnType<typeof loadPersistedHeroState>>(null);
-  const [isAnimating, setIsAnimating] = useState(true);
-  const [isReturning, setIsReturning] = useState(false);
-  const headerRef = useRef<HTMLDivElement>(null);
-  const controls = useAnimation();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { startReturnTransition } = useHeroTransition();
@@ -37,21 +32,31 @@ export function PhoneDetailHeader({ phoneId }: PhoneDetailHeaderProps) {
   const from = searchParams.get("from") || "ranking";
   const returnUrl = from === "phones" ? "/phones" : "/ranking";
 
-  useEffect(() => {
-    // 加载持久化的转场状态
+  // 使用 useMemo 计算初始 heroData
+  const initialHeroData = useMemo(() => {
     const persisted = loadPersistedHeroState();
     if (persisted && persisted.targetPhoneId === phoneId) {
-      setHeroData(persisted);
-      // 阶段二：内容展开（300ms-600ms）
+      return persisted;
+    }
+    return null;
+  }, [phoneId]);
+
+  const [heroData, setHeroData] = useState(initialHeroData);
+  const [isAnimating, setIsAnimating] = useState(!!initialHeroData);
+  const [isReturning, setIsReturning] = useState(false);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const controls = useAnimation();
+
+  // 清理持久化状态
+  useEffect(() => {
+    if (initialHeroData) {
       const timer = setTimeout(() => {
         setIsAnimating(false);
         clearPersistedHeroState();
       }, 300);
       return () => clearTimeout(timer);
-    } else {
-      setIsAnimating(false);
     }
-  }, [phoneId]);
+  }, [initialHeroData]);
 
   const phoneData = heroData?.phoneData;
   const themeColor = heroData?.themeColor || "#00D9FF";

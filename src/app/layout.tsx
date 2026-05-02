@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Header } from "@/components/layout/header";
+import { Sidebar } from "@/components/layout/sidebar";
 import { Footer } from "@/components/layout/footer";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { HeroTransitionOverlay } from "@/components/ranking/hero-transition-overlay";
@@ -39,7 +39,7 @@ export default function RootLayout({
       className={`${inter.variable} ${jetbrainsMono.variable} dark h-full antialiased`}
       data-scroll-behavior="smooth"
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground font-sans">
+      <body className="min-h-full bg-background text-foreground font-sans">
         {/* Global Noise Texture Overlay */}
         <div
           className="fixed inset-0 pointer-events-none z-[9999]"
@@ -51,11 +51,13 @@ export default function RootLayout({
           aria-hidden="true"
         />
         <TooltipProvider>
-          <Header />
-          <main className="flex-1 pt-[64px] pb-14 md:pb-0 relative">
-            {children}
-          </main>
-          <Footer />
+          <Sidebar />
+          <div className="min-h-full flex flex-col pl-[72px] lg:pl-[210px]">
+            <main className="flex-1 pb-14 md:pb-0 relative min-h-screen">
+              {children}
+            </main>
+            <Footer />
+          </div>
           <MobileNav />
           <HeroTransitionOverlay />
         </TooltipProvider>

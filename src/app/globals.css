@@ -318,11 +318,13 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
   html {
     @apply font-sans;
+    overflow-x: hidden;
+  }
+  body {
+    @apply bg-background text-foreground;
+    overflow-x: hidden;
   }
 }
 
@@ -1369,6 +1371,43 @@ html {
   display: none;
 }
 
+/* 通用隐藏滚动条工具类 */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* 手机详情页右侧内容滚动区 - 隐藏滚动条但保留滚动功能 */
+.phone-detail-content-scroll {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+  scrollbar-color: transparent transparent !important;
+}
+
+.phone-detail-content-scroll::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+.phone-detail-content-scroll::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+.phone-detail-content-scroll::-webkit-scrollbar-thumb {
+  background: transparent !important;
+  border: none !important;
+}
+
+.phone-detail-content-scroll::-webkit-scrollbar-corner {
+  background: transparent !important;
+}
+
 /* 手机卡片网格布局 */
 .phone-grid {
   display: grid;
@@ -2130,4 +2169,668 @@ html {
 .filter-chip:focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px #080c14, 0 0 0 4px rgba(0, 229, 255, 0.5);
+}
+
+/* ========== 手机详情页特殊样式 ========== */
+
+/* 隐藏手机详情页的Footer */
+body:has(.phone-detail-page) footer,
+body:has(.phone-detail-page) .footer {
+  display: none !important;
+}
+
+/* ========== 个人中心色彩Token ========== */
+
+/* 个人中心模块色彩Token - 与社区模块共享色系，保持品牌一致性 */
+:root {
+  /* 主品牌色系 */
+  --profile-primary: #6366f1;
+  --profile-primary-glow: rgba(99, 102, 241, 0.3);
+  --profile-primary-light: rgba(99, 102, 241, 0.15);
+
+  --profile-highlight: #a855f7;
+  --profile-highlight-glow: rgba(168, 85, 247, 0.3);
+  --profile-highlight-light: rgba(168, 85, 247, 0.15);
+
+  --profile-accent: #ec4899;
+  --profile-accent-glow: rgba(236, 72, 153, 0.3);
+  --profile-accent-light: rgba(236, 72, 153, 0.15);
+
+  /* 功能色 */
+  --profile-success: #22c55e;
+  --profile-success-glow: rgba(34, 197, 94, 0.3);
+  --profile-success-light: rgba(34, 197, 94, 0.15);
+
+  /* 背景与卡片 */
+  --profile-bg: #0a0e1a;
+  --profile-card: rgba(15, 23, 42, 0.7);
+  --profile-card-border: rgba(255, 255, 255, 0.08);
+  --profile-card-hover-border: rgba(99, 102, 241, 0.3);
+  --profile-card-hover-shadow: rgba(99, 102, 241, 0.08);
+
+  /* 文字层级 */
+  --profile-text-primary: #f8fafc;
+  --profile-text-secondary: #cbd5e1;
+  --profile-text-tertiary: #94a3b8;
+  --profile-text-disabled: #6b7280;
+
+  /* 渐变预设 */
+  --profile-gradient-primary: linear-gradient(135deg, var(--profile-primary) 0%, var(--profile-highlight) 100%);
+  --profile-gradient-accent: linear-gradient(135deg, var(--profile-highlight) 0%, var(--profile-accent) 100%);
+  --profile-gradient-success: linear-gradient(135deg, var(--profile-success) 0%, #34d399 100%);
+
+  /* 动画时长 */
+  --profile-transition-fast: 150ms;
+  --profile-transition-normal: 300ms;
+  --profile-transition-slow: 600ms;
+
+  /* 阴影 */
+  --profile-shadow-glow: 0 0 20px var(--profile-primary-glow);
+  --profile-shadow-card: 0 4px 24px rgba(0, 0, 0, 0.25);
+  --profile-shadow-card-hover: 0 8px 32px var(--profile-card-hover-shadow);
+}
+
+/* ========== 圈子社区页动态背景 ========== */
+
+/* 圈子模块色彩Token - 与个人中心共享 */
+:root {
+  --community-primary: var(--profile-primary);
+  --community-primary-glow: var(--profile-primary-glow);
+  --community-highlight: var(--profile-highlight);
+  --community-highlight-glow: var(--profile-highlight-glow);
+  --community-accent: var(--profile-accent);
+  --community-accent-glow: var(--profile-accent-glow);
+  --community-bg-dark: var(--profile-bg);
+  --community-glass: var(--profile-card);
+  --community-glass-border: var(--profile-card-border);
+}
+
+/* 主背景：紫蓝调粒子 + 网格 */
+.circle-page {
+  background: 
+    radial-gradient(ellipse at 20% 50%, rgba(99, 102, 241, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(168, 85, 247, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 100%, rgba(236, 72, 153, 0.06) 0%, transparent 50%),
+    linear-gradient(180deg, var(--community-bg-dark) 0%, #0f172a 40%, #1a1033 100%);
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ========== 个人中心封面区域 ========== */
+
+/* 封面容器 */
+.profile-header {
+  height: 280px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 0 0 24px 24px;
+}
+
+/* 默认渐变背景 */
+.profile-header-default {
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%);
+}
+
+/* 粒子纹理叠加 */
+.profile-header-pattern {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.1) 1px, transparent 0);
+  background-size: 40px 40px;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+/* 封面图片 */
+.profile-header-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 封面遮罩 - 保证文字可读性 */
+.profile-header-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(10, 14, 26, 0.2) 0%,
+    rgba(10, 14, 26, 0.5) 60%,
+    var(--profile-bg) 100%
+  );
+  pointer-events: none;
+}
+
+/* 更换封面按钮 */
+.profile-cover-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: white;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+/* 悬停时显示按钮 */
+.profile-header:hover .profile-cover-btn,
+.profile-header:focus-within .profile-cover-btn {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.profile-cover-btn:hover {
+  background: rgba(0, 0, 0, 0.6);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* 上传输入框隐藏 */
+.profile-cover-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ========== 个人中心头像系统 ========== */
+
+/* 头像容器 */
+.avatar-wrapper {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  border: 4px solid var(--profile-bg);
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.avatar-wrapper:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 40px rgba(99, 102, 241, 0.4);
+}
+
+/* 头像图片 */
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* 头像编辑按钮 */
+.avatar-edit {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 36px;
+  height: 36px;
+  background: var(--profile-primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border: 2px solid var(--profile-bg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.avatar-wrapper:hover .avatar-edit {
+  opacity: 1;
+}
+
+/* 头像裁剪模态框 */
+.avatar-crop-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+}
+
+.avatar-crop-container {
+  background: var(--profile-card);
+  border: 1px solid var(--profile-card-border);
+  border-radius: 24px;
+  padding: 24px;
+  max-width: 480px;
+  width: 90%;
+  box-shadow: var(--profile-shadow-card);
+}
+
+/* 裁剪画布区域 */
+.avatar-crop-area {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.5);
+  margin-bottom: 20px;
+}
+
+.avatar-crop-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* 圆形裁剪遮罩 */
+.avatar-crop-mask {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.avatar-crop-mask::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.avatar-crop-mask::after {
+  content: '';
+  width: 60%;
+  height: 60%;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6);
+}
+
+/* 裁剪控制按钮 */
+.avatar-crop-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.avatar-crop-btn {
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.avatar-crop-btn-cancel {
+  background: transparent;
+  color: var(--profile-text-secondary);
+  border: 1px solid var(--profile-card-border);
+}
+
+.avatar-crop-btn-cancel:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.avatar-crop-btn-confirm {
+  background: var(--profile-primary);
+  color: white;
+}
+
+.avatar-crop-btn-confirm:hover {
+  background: var(--profile-highlight);
+  box-shadow: 0 0 20px var(--profile-primary-glow);
+}
+
+/* Toast 提示 */
+.profile-toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  z-index: 200;
+  opacity: 0;
+  animation: toast-slide-up 0.3s ease-out forwards;
+}
+
+.profile-toast-success {
+  background: rgba(34, 197, 94, 0.95);
+}
+
+.profile-toast-error {
+  background: rgba(239, 68, 68, 0.95);
+}
+
+.profile-toast-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(8px);
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+@keyframes toast-slide-up {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* 浮动光球基础样式 */
+.orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* 光球1：靛蓝色，大，左上区域 */
+.orb-1 {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, var(--community-primary-glow) 0%, transparent 70%);
+  left: 0;
+  top: 10%;
+  animation: float-1 20s ease-in-out infinite;
+}
+
+/* 光球2：紫罗兰色，中等，右上区域 */
+.orb-2 {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, var(--community-highlight-glow) 0%, transparent 70%);
+  right: 0;
+  top: 20%;
+  animation: float-2 25s ease-in-out infinite;
+}
+
+/* 光球3：粉色，小，底部中央 */
+.orb-3 {
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, var(--community-accent-glow) 0%, transparent 70%);
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  animation: float-3 18s ease-in-out infinite;
+}
+
+/* 光球1浮动动画 */
+@keyframes float-1 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(30px, -20px) scale(1.05);
+  }
+  50% {
+    transform: translate(15px, 15px) scale(0.95);
+  }
+  75% {
+    transform: translate(-10px, 5px) scale(1.02);
+  }
+}
+
+/* 光球2浮动动画 */
+@keyframes float-2 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(-25px, 25px) scale(0.92);
+  }
+  66% {
+    transform: translate(20px, -15px) scale(1.05);
+  }
+}
+
+/* 光球3浮动动画 */
+@keyframes float-3 {
+  0%, 100% {
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-40px) scale(1.1);
+  }
+}
+
+/* 毛玻璃效果 */
+.glass {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+}
+
+.glass-strong {
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+}
+
+/* 无限滚动动画 */
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 30s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* ========== 帖子卡片样式 ========== */
+.post-card {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  border-radius: 16px;
+  padding: 20px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Hover：上浮 + 光晕 + 扫光 */
+.post-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 60px rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.post-card:hover::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+  animation: shine-sweep 0.6s ease-out;
+}
+
+@keyframes shine-sweep {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 200%;
+  }
+}
+
+/* ========== 热度标识 ========== */
+
+/* boom - 红色火焰 + 脉冲 */
+.heat-boom {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.heat-boom .flame-icon {
+  animation: heat-pulse 1.5s ease-in-out infinite;
+}
+
+/* hot - 橙色火焰 */
+.heat-hot {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: rgba(249, 115, 22, 0.15);
+  border: 1px solid rgba(249, 115, 22, 0.3);
+  color: #f97316;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* discussing - 青色圆点脉冲 */
+.heat-discussing {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: rgba(34, 211, 238, 0.15);
+  border: 1px solid rgba(34, 211, 238, 0.3);
+  color: #22d3ee;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.heat-discussing .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #22d3ee;
+  animation: dot-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes heat-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+}
+
+@keyframes dot-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.7;
+  }
+}
+
+/* 响应式：移动端缩小光球 */
+@media (max-width: 768px) {
+  .orb-1 {
+    width: 250px;
+    height: 250px;
+    opacity: 0.3;
+  }
+  
+  .orb-2 {
+    width: 200px;
+    height: 200px;
+    opacity: 0.25;
+  }
+  
+  .orb-3 {
+    width: 180px;
+    height: 180px;
+    opacity: 0.25;
+  }
+}
+
+/* ========== 圈子社区页三栏布局 ========== */
+
+/* 布局变量 */
+:root {
+  --community-left-width: 160px;
+  --community-right-width: 200px;
+  --community-gap: 16px;
+  --community-center-max: 460px;
+}
+
+/* 
+   使用 CSS Grid 布局
+   
+   策略：
+   - 左右两侧栏：固定宽度
+   - 中间区域：minmax 确保最小宽度 + max-width 限制最大宽度
+   - 容器居中：justify-content center
+   
+   80%缩放下计算（1920*0.8-210导航 = 1326px可用）：
+   - 三栏总宽 = 160 + 460 + 200 + 32(gap) = 852px
+   - 852 < 1326 ✓ 三栏完整显示，整体居中
+*/
+.community-grid-layout {
+  display: grid;
+  grid-template-columns: var(--community-left-width) minmax(300px, var(--community-center-max)) var(--community-right-width);
+  gap: var(--community-gap);
+  align-items: start;
+  justify-content: center;
+}
+
+/* ========== 发布框按钮 ========== */
+.post-composer-submit {
+  background: linear-gradient(135deg, var(--community-primary) 0%, var(--community-highlight) 100%);
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+}
+
+.post-composer-submit:hover {
+  background: linear-gradient(135deg, var(--community-primary) 0%, var(--community-highlight) 100%);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
 }

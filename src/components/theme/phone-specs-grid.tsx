@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { motion } from "framer-motion";
 import { Smartphone, Cpu, Camera, Battery, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -49,7 +50,7 @@ export function PhoneSpecsGrid({
 }
 
 // 单个参数卡片
-function SpecCard({
+const SpecCard = memo(function SpecCard({
   spec,
   index,
   themeColor,
@@ -107,10 +108,7 @@ function SpecCard({
       </div>
     </motion.div>
   );
-}
-
-// ============================================================================
-// 演示组件
+});
 // ============================================================================
 
 export function PhoneSpecsGridDemo() {

@@ -1,7 +1,7 @@
 # 格物 (Gewu) 项目优化文档
 
 > 生成日期：2026-04-26
-> 版本：v2.0
+> 版本：v2.1
 
 ## 📋 项目概述
 
@@ -66,6 +66,24 @@ src/
 - `phone-detail-header.tsx` - 详情页头部
 - `score-radar-chart.tsx` - 雷达图评分
 - `category-detail-panel.tsx` - 分类详情面板
+
+### 社区功能增强 (v2.1)
+- `community-background.tsx` - 社区页面背景
+- `feed-tabs.tsx` - 内容流标签切换
+- `heat-indicator.tsx` - 热度指示器
+- `left-sidebar.tsx` - 左侧边栏
+- `like-button.tsx` - 点赞按钮组件
+- `post-composer.tsx` - 发帖编辑器
+- `right-sidebar.tsx` - 右侧边栏
+- `trending-bar.tsx` -  trending 热门栏
+
+### 布局组件
+- `sidebar.tsx` - 侧边栏导航
+
+### API 层 (v2.1)
+- `lib/api/contract.ts` - API 契约定义
+- `lib/api/client.ts` - API 客户端
+- `lib/api/mock.ts` - Mock 数据
 
 ---
 
@@ -473,7 +491,7 @@ npm install -D vitest @testing-library/react @testing-library/jest-dom
 
 ## 📚 文档维护
 
-- 本文档版本：v2.0
+- 本文档版本：v2.1
 - 最后更新：2026-04-26
 - 维护者：开发团队
 - 更新频率：每迭代周期

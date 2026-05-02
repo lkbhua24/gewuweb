@@ -282,13 +282,14 @@ export default function RankingPage() {
   const transitioningPhoneId = getHeroTransitionState().targetPhoneId;
 
   // 检测是否有返回状态（从详情页返回）
-  const [returnPhoneId, setReturnPhoneId] = useState<string | null>(null);
+  const initialReturnState = useMemo(() => loadPersistedReturnState(), []);
+  const [returnPhoneId, setReturnPhoneId] = useState<string | null>(
+    initialReturnState?.phoneId || null
+  );
 
+  // 清理返回状态
   useEffect(() => {
-    const returnState = loadPersistedReturnState();
-    if (returnState) {
-      setReturnPhoneId(returnState.phoneId);
-      // 短暂延迟后清除返回状态，让占位符恢复为实体卡片
+    if (initialReturnState) {
       const timer = setTimeout(() => {
         setReturnPhoneId(null);
         clearPersistedReturnState();
@@ -307,7 +308,7 @@ export default function RankingPage() {
       }, 300);
       return () => clearTimeout(timer);
     }
-  }, []);
+  }, [initialReturnState]);
 
   return (
     <div className="ranking-page-bg font-ranking-cn" style={cssVars}>

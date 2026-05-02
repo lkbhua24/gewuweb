@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Heart, Share2, Calendar, Flame } from "lucide-react";
+import { Calendar, Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ============================================================================
@@ -113,50 +113,6 @@ export function PhoneInfoPanel({
             </span>
           </motion.div>
 
-          {/* 操作按钮组 */}
-          <motion.div
-            className="flex items-center gap-2"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-          >
-            {/* 收藏按钮 */}
-            <motion.button
-              onClick={handleFavorite}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all",
-                "border backdrop-blur-sm",
-                isFavorite
-                  ? "bg-red-500/20 border-red-500/50 text-red-400"
-                  : "bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:text-white"
-              )}
-              whileHover={{ scale: 1.02, boxShadow: isFavorite ? "0 4px 15px rgba(239, 68, 68, 0.3)" : `0 4px 15px ${themeColor}20` }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-            >
-              <Heart
-                className={cn("w-4 h-4 transition-all", isFavorite && "fill-current")}
-              />
-              <span>收藏</span>
-            </motion.button>
-
-            {/* 分享按钮 */}
-            <motion.button
-              onClick={handleShare}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all",
-                "border backdrop-blur-sm bg-white/5 border-white/10 text-gray-400",
-                "hover:bg-white/10 hover:text-white",
-                isSharing && "bg-cyan-500/20 border-cyan-500/50 text-cyan-400"
-              )}
-              whileHover={{ scale: 1.02, boxShadow: `0 4px 15px ${themeColor}20` }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-            >
-              <Share2 className="w-4 h-4" />
-              <span>{isSharing ? "已复制" : "分享"}</span>
-            </motion.button>
-          </motion.div>
         </div>
 
         {/* 第二行：型号 */}

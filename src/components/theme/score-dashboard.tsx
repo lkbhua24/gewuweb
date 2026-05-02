@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -178,7 +179,7 @@ export function ScoreDashboard({
 }
 
 // 单个维度进度条
-function DimensionBar({
+const DimensionBar = memo(function DimensionBar({
   dimension,
   index,
   themeColor,
@@ -256,10 +257,7 @@ function DimensionBar({
       </div>
     </motion.div>
   );
-}
-
-// ============================================================================
-// 演示组件
+});
 // ============================================================================
 
 export function ScoreDashboardDemo() {

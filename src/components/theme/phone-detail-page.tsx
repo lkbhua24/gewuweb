@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ParticleBackground } from "./particle-background";
-import { Phone3DShowcase } from "./phone-3d-showcase";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import dynamic from "next/dynamic";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { PhoneInfoPanel } from "./phone-info-panel";
 import { PhoneSpecsGrid } from "./phone-specs-grid";
 import { ScoreDashboard } from "./score-dashboard";
@@ -15,7 +14,17 @@ import { MobileInfoAccordion } from "./mobile-info-accordion";
 import { useDynamicTheme } from "@/hooks/use-dynamic-theme";
 import { useThemeCssVariables } from "@/hooks/use-theme-css-variables";
 import { cn } from "@/lib/utils";
-import { Smartphone, BarChart3, TrendingUp, ShoppingCart, MessageSquare, Award } from "lucide-react";
+import { Smartphone, BarChart3, TrendingUp, ShoppingCart, MessageSquare, Award, Heart, Share2, Scale } from "lucide-react";
+
+const ParticleBackground = dynamic(
+  () => import("./particle-background").then((mod) => ({ default: mod.ParticleBackground })),
+  { ssr: false }
+);
+
+const Phone3DShowcase = dynamic(
+  () => import("./phone-3d-showcase").then((mod) => ({ default: mod.Phone3DShowcase })),
+  { ssr: false }
+);
 
 // ============================================================================
 // 完整手机详情页 - 响应式适配
@@ -48,12 +57,12 @@ const TIMELINE = {
 };
 
 // 视口进入动画变体
-const fadeInUpVariants = {
+const fadeInUpVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] },
+    transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as const },
   },
 };
 
@@ -72,23 +81,26 @@ export function PhoneDetailPage({
     secondary: currentTheme.secondary,
   });
 
-  const [isLoaded, setIsLoaded] = useState(true);
+  const isLoaded = true;
   const [showParticles, setShowParticles] = useState(false);
   const [showPhone, setShowPhone] = useState(false);
   const [showInfoModules, setShowInfoModules] = useState(false);
   const [animateChart, setAnimateChart] = useState(false);
   const [animateProgress, setAnimateProgress] = useState(false);
-  const [isNavScrolled, setIsNavScrolled] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isCompare, setIsCompare] = useState(false);
 
-  // 监听滚动
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsNavScrolled(window.scrollY > 100);
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  // 右侧内容区域滚动容器的 ref
+  const contentScrollRef = useRef<HTMLElement>(null);
+
+  const scoreDimensions = useMemo(() => [
+    { name: "性能", score: 9.2 },
+    { name: "影像", score: 9.5 },
+    { name: "屏幕", score: 9.0 },
+    { name: "续航", score: 8.5 },
+    { name: "质感", score: 8.8 },
+    { name: "体验", score: 7.5 },
+  ], []);
 
   // 页面加载时按时间线触发各模块
   useEffect(() => {
@@ -102,33 +114,49 @@ export function PhoneDetailPage({
     return () => timers.forEach(clearTimeout);
   }, []);
 
+  // 将页面滚轮事件传递给右侧内容区域
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      if (window.innerWidth < 1280) return;
+
+      const contentEl = contentScrollRef.current;
+      if (!contentEl) return;
+
+      e.preventDefault();
+      contentEl.scrollTop += e.deltaY;
+    };
+
+    document.addEventListener('wheel', handleWheel, { passive: false });
+    return () => document.removeEventListener('wheel', handleWheel);
+  }, []);
+
   const handleColorChange = useCallback((color: { id: string; name: string; color: string }) => {
     setColorByName(color.name);
   }, [setColorByName]);
 
   // 动画变体
-  const backgroundVariants = {
+  const backgroundVariants: Variants = {
     hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { duration: 0.8, ease: "easeOut" } },
+    visible: { opacity: 1, transition: { duration: 0.8, ease: "easeOut" as const } },
   };
 
-  const phoneVariants = {
+  const phoneVariants: Variants = {
     hidden: { opacity: 0, y: 100, scale: 0.9 },
     visible: {
       opacity: 1,
       y: 0,
       scale: 1,
-      transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] },
+      transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] as const },
     },
   };
 
-  const infoModuleVariants = {
+  const infoModuleVariants: Variants = {
     hidden: { opacity: 0, y: 30, filter: "blur(10px)" },
     visible: (delay: number) => ({
       opacity: 1,
       y: 0,
       filter: "blur(0px)",
-      transition: { duration: 0.5, delay: delay * 0.1, ease: "easeOut" },
+      transition: { duration: 0.5, delay: delay * 0.1, ease: "easeOut" as const },
     }),
   };
 
@@ -142,9 +170,8 @@ export function PhoneDetailPage({
         <PhoneInfoPanel
           brand={brand}
           model={model}
-          tagline={tagline}
+          slogan={tagline}
           releaseDate={releaseDate}
-          startingPrice={startingPrice}
         />
       ),
     },
@@ -163,14 +190,7 @@ export function PhoneDetailPage({
           totalScore={8.9}
           themeColor={currentTheme.primary}
           animateProgress={animateProgress}
-          dimensions={[
-            { name: "性能", score: 9.2 },
-            { name: "影像", score: 9.5 },
-            { name: "屏幕", score: 9.0 },
-            { name: "续航", score: 8.5 },
-            { name: "质感", score: 8.8 },
-            { name: "体验", score: 7.5 },
-          ]}
+          dimensions={scoreDimensions}
         />
       ),
     },
@@ -195,67 +215,8 @@ export function PhoneDetailPage({
   ];
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden">
-      {/* ==================== 顶部导航栏 ==================== */}
-      <motion.header
-        className={cn(
-          "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-          isNavScrolled
-            ? "bg-[#080c14]/80 backdrop-blur-[20px] border-b border-white/10"
-            : "bg-transparent"
-        )}
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-14 sm:h-16">
-            <div className="flex items-center gap-3">
-              <div
-                className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center text-white font-bold text-xs sm:text-sm"
-                style={{ backgroundColor: currentTheme.primary }}
-              >
-                {brand.charAt(0)}
-              </div>
-              <span className="text-white font-medium text-sm hidden sm:block">{brand}</span>
-            </div>
-
-            <nav className="hidden md:flex items-center gap-6">
-              <a href="#overview" className="text-sm text-gray-300 hover:text-white transition-colors">概览</a>
-              <a href="#specs" className="text-sm text-gray-300 hover:text-white transition-colors">参数</a>
-              <a href="#reviews" className="text-sm text-gray-300 hover:text-white transition-colors">评价</a>
-              <a href="#price" className="text-sm text-gray-300 hover:text-white transition-colors">价格</a>
-            </nav>
-
-            <div className="flex items-center gap-2 sm:gap-3">
-              <motion.button
-                className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm text-white/80 hover:text-white transition-colors"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-              >
-                收藏
-              </motion.button>
-              <motion.button
-                className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm rounded-lg font-medium transition-shadow duration-200"
-                style={{
-                  backgroundColor: currentTheme.primary,
-                  color: "#0a0a14",
-                  boxShadow: `0 0 0 ${currentTheme.primary}40`,
-                }}
-                whileHover={{
-                  scale: 1.02,
-                  boxShadow: `0 4px 20px ${currentTheme.primary}60`,
-                }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-              >
-                立即购买
-              </motion.button>
-            </div>
-          </div>
-        </div>
-      </motion.header>
+    <div className="phone-detail-page relative min-h-screen overflow-x-hidden">
+      {/* 注意：全局导航栏由 layout.tsx 中的 Header 组件提供 */}
 
       {/* ==================== 背景层 ==================== */}
       <motion.div
@@ -280,46 +241,95 @@ export function PhoneDetailPage({
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8 }}
           >
-            <ParticleBackground themeColor={currentTheme.primary} density="medium" speed={0.3} />
+            <ParticleBackground primaryColor={currentTheme.primary} />
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* ==================== 主内容区 ==================== */}
-      <main className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 pt-20 sm:pt-24 pb-32">
-        
-        {/* 
+      <main className="relative z-20 xl:fixed xl:inset-0 xl:left-[210px] xl:top-0 xl:right-0 xl:bottom-0 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 pt-4 sm:pt-6 h-full">
+
+        {/*
           响应式布局：
           - Mobile (<768px): 单列，手机在上，手风琴在下
           - Tablet (768-1279px): 上下布局，手机在上
-          - Desktop (≥1280px): 左右分栏 40:60，左侧 sticky
+          - Desktop (≥1280px): 左右分栏 40:60，右侧可滚动
         */}
-        <div className="flex flex-col xl:grid xl:grid-cols-[40%_60%] xl:gap-12">
-          
-          {/* ==================== 手机展示区 ==================== */}
+        <div className="flex flex-col xl:flex-row xl:gap-[58px] h-full">
+
+          {/* ==================== 手机展示区（左侧） ==================== */}
           <motion.section
             className={cn(
-              "w-full",
-              "xl:sticky xl:top-24 xl:h-[calc(100vh-6rem)]",
-              "mb-8 xl:mb-0"
+              "w-full xl:w-[40%]",
+              "xl:flex xl:flex-col xl:justify-center",
+              "mb-8 xl:mb-0 z-10"
             )}
             variants={phoneVariants}
             initial="hidden"
             animate={showPhone ? "visible" : "hidden"}
           >
-            <Phone3DShowcase
-              brand={brand}
-              model={model}
-              onColorChange={handleColorChange}
-              onFavoriteChange={(isFav) => console.log("Favorite:", isFav)}
-              onShare={() => console.log("Share clicked")}
-              onCompare={() => console.log("Compare clicked")}
-            />
+            <div className="xl:-ml-[20px]">
+              <Phone3DShowcase
+                brand={brand}
+                model={model}
+                onColorChange={handleColorChange}
+              />
+            </div>
           </motion.section>
 
-          {/* ==================== 信息架构区 ==================== */}
-          <section className="w-full">
-            
+          {/* ==================== 信息架构区（右侧滚动区） ==================== */}
+          <div className="w-full xl:w-[60%] xl:flex-1 xl:h-full xl:overflow-hidden">
+          <section
+            ref={contentScrollRef}
+            className="w-full xl:h-full xl:overflow-y-scroll phone-detail-content-scroll xl:pr-[17px] xl:-mr-[17px]"
+          >
+            {/* 右上角操作按钮 */}
+            <motion.div
+              className="hidden md:flex items-center justify-end gap-2 mb-6"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.4 }}
+            >
+              <motion.button
+                onClick={() => setIsFavorite(!isFavorite)}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all border",
+                  isFavorite
+                    ? "bg-red-500/20 border-red-500/50 text-red-400"
+                    : "bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:text-white"
+                )}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Heart className={cn("w-4 h-4", isFavorite && "fill-current")} />
+                <span>收藏</span>
+              </motion.button>
+              <motion.button
+                onClick={() => console.log("分享")}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all border bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:text-white"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Share2 className="w-4 h-4" />
+                <span>分享</span>
+              </motion.button>
+              <motion.button
+                onClick={() => setIsCompare(!isCompare)}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all border",
+                  isCompare
+                    ? "bg-cyan-500/20 border-cyan-500/50 text-cyan-400"
+                    : "bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:text-white"
+                )}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Scale className="w-4 h-4" />
+                <span>对比</span>
+              </motion.button>
+            </motion.div>
+
             {/* Desktop & Tablet: 直接展示所有模块 */}
             <div className="hidden md:block space-y-8">
               {/* 品牌标识 */}
@@ -339,9 +349,8 @@ export function PhoneDetailPage({
                   <PhoneInfoPanel
                     brand={brand}
                     model={model}
-                    tagline={tagline}
+                    slogan={tagline}
                     releaseDate={releaseDate}
-                    startingPrice={startingPrice}
                   />
                 </motion.div>
               </motion.div>
@@ -370,6 +379,7 @@ export function PhoneDetailPage({
                 whileInView="visible"
                 viewport={{ once: true, margin: "-50px" }}
                 variants={fadeInUpVariants}
+                style={{ contentVisibility: "auto", containIntrinsicSize: "0 300px" }}
               >
                 <motion.div
                   custom={2}
@@ -381,14 +391,7 @@ export function PhoneDetailPage({
                     totalScore={8.9}
                     themeColor={currentTheme.primary}
                     animateProgress={animateProgress}
-                    dimensions={[
-                      { name: "性能", score: 9.2 },
-                      { name: "影像", score: 9.5 },
-                      { name: "屏幕", score: 9.0 },
-                      { name: "续航", score: 8.5 },
-                      { name: "质感", score: 8.8 },
-                      { name: "体验", score: 7.5 },
-                    ]}
+                    dimensions={scoreDimensions}
                   />
                 </motion.div>
               </motion.div>
@@ -400,6 +403,7 @@ export function PhoneDetailPage({
                 whileInView="visible"
                 viewport={{ once: true, margin: "-50px" }}
                 variants={fadeInUpVariants}
+                style={{ contentVisibility: "auto", containIntrinsicSize: "0 400px" }}
               >
                 <motion.div
                   custom={3}
@@ -417,6 +421,7 @@ export function PhoneDetailPage({
                 whileInView="visible"
                 viewport={{ once: true, margin: "-50px" }}
                 variants={fadeInUpVariants}
+                style={{ contentVisibility: "auto", containIntrinsicSize: "0 350px" }}
               >
                 <motion.div
                   custom={4}
@@ -435,6 +440,7 @@ export function PhoneDetailPage({
                 whileInView="visible"
                 viewport={{ once: true, margin: "-50px" }}
                 variants={fadeInUpVariants}
+                style={{ contentVisibility: "auto", containIntrinsicSize: "0 400px" }}
               >
                 <motion.div
                   custom={5}
@@ -458,6 +464,8 @@ export function PhoneDetailPage({
               </motion.div>
             </div>
           </section>
+          </div>
+        </div>
         </div>
       </main>
 

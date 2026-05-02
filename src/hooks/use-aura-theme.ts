@@ -53,7 +53,7 @@ export interface UseAuraThemeReturn {
 export function useAuraTheme(options: UseAuraThemeOptions = {}): UseAuraThemeReturn {
   const { brand, model, customHex, config, applyToBody = false } = options;
 
-  const [isReady, setIsReady] = useState(false);
+  const [isReady, setIsReady] = useState(true);
 
   // 计算主色
   const primaryHex = useMemo(() => {
@@ -95,15 +95,11 @@ export function useAuraTheme(options: UseAuraThemeOptions = {}): UseAuraThemeRet
         body.style.setProperty(key, value);
       });
 
-      setIsReady(true);
-
       return () => {
         Object.keys(cssVars).forEach((key) => {
           body.style.removeProperty(key);
         });
       };
-    } else {
-      setIsReady(true);
     }
   }, [cssVars, applyToBody]);
 
@@ -128,7 +124,7 @@ export function usePresetAuraTheme(
 ): UseAuraThemeReturn {
   const theme = PRESET_AURA_THEMES[presetKey] || getDefaultAuraTheme();
 
-  const [isReady, setIsReady] = useState(false);
+  const [isReady, setIsReady] = useState(true);
 
   const cssVars = useMemo(() => generateAuraCssVars(theme), [theme]);
 
@@ -149,15 +145,11 @@ export function usePresetAuraTheme(
         body.style.setProperty(key, value);
       });
 
-      setIsReady(true);
-
       return () => {
         Object.keys(cssVars).forEach((key) => {
           body.style.removeProperty(key);
         });
       };
-    } else {
-      setIsReady(true);
     }
   }, [cssVars, applyToBody]);
 

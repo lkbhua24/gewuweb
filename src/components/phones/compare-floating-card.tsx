@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Scale, X } from "lucide-react";
 
@@ -11,15 +10,7 @@ interface CompareFloatingCardProps {
 }
 
 export function CompareFloatingCard({ count, onClick, onClear }: CompareFloatingCardProps) {
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    if (count > 0) {
-      setIsVisible(true);
-    } else {
-      setIsVisible(false);
-    }
-  }, [count]);
+  const isVisible = count > 0;
 
   return (
     <AnimatePresence>

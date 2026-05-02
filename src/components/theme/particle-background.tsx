@@ -24,6 +24,17 @@ interface ParticleBackgroundProps {
 }
 
 // 粒子类
+function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result
+    ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16),
+      }
+    : null;
+}
+
 class Particle {
   x: number;
   y: number;
@@ -113,7 +124,7 @@ class GradientMesh {
 
   // 绘制流动网格
   draw(ctx: CanvasRenderingContext2D, width: number, height: number) {
-    this.time += 0.002; // 0.2px/frame 等效速度
+    this.time += 0.002;
 
     const gradient = ctx.createRadialGradient(
       width / 2,
@@ -124,8 +135,7 @@ class GradientMesh {
       Math.max(width, height)
     );
 
-    // 解析颜色
-    const rgb = this.hexToRgb(this.color);
+    const rgb = hexToRgb(this.color);
     if (!rgb) return;
 
     // 动态色彩流动
@@ -184,17 +194,6 @@ class GradientMesh {
       ctx.stroke();
     }
   }
-
-  private hexToRgb(hex: string): { r: number; g: number; b: number } | null {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result
-      ? {
-          r: parseInt(result[1], 16),
-          g: parseInt(result[2], 16),
-          b: parseInt(result[3], 16),
-        }
-      : null;
-  }
 }
 
 // 光晕脉冲类 (第1层)
@@ -209,16 +208,15 @@ class GlowPulse {
   }
 
   draw(ctx: CanvasRenderingContext2D, width: number, height: number) {
-    // 4秒周期呼吸动画
-    this.time += 0.016; // 约 60fps
-    const breathe = (Math.sin(this.time * Math.PI * 0.5) + 1) / 2; // 0 -> 1 -> 0
-    const scale = 1 + breathe * 0.15; // 1.0 -> 1.15 -> 1.0
+    this.time += 0.016;
+    const breathe = (Math.sin(this.time * Math.PI * 0.5) + 1) / 2;
+    const scale = 1 + breathe * 0.15;
 
     const centerX = width * this.position.x;
     const centerY = height * this.position.y;
-    const baseRadius = 150; // 300px 直径
+    const baseRadius = 150;
 
-    const rgb = this.hexToRgb(this.color);
+    const rgb = hexToRgb(this.color);
     if (!rgb) return;
 
     // 外发光
@@ -237,17 +235,6 @@ class GlowPulse {
 
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
-  }
-
-  private hexToRgb(hex: string): { r: number; g: number; b: number } | null {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result
-      ? {
-          r: parseInt(result[1], 16),
-          g: parseInt(result[2], 16),
-          b: parseInt(result[3], 16),
-        }
-      : null;
   }
 
   updateColor(color: string) {
@@ -294,31 +281,96 @@ export function ParticleBackground({
   const drawConnections = useCallback(
     (ctx: CanvasRenderingContext2D, particles: Particle[]) => {
       const maxDistance = 100;
+      const maxDistanceSq = maxDistance * maxDistance;
+      const cellSize = maxDistance;
+      const grid = new Map<number, number[]>();
 
       for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-          const dx = particles[i].x - particles[j].x;
-          const dy = particles[i].y - particles[j].y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
+        const p = particles[i];
+        const cellX = Math.floor(p.x / cellSize);
+        const cellY = Math.floor(p.y / cellSize);
+        const key = cellX * 73856093 ^ cellY * 19349663;
+        let cell = grid.get(key);
+        if (!cell) {
+          cell = [];
+          grid.set(key, cell);
+        }
+        cell.push(i);
+      }
 
-          if (distance < maxDistance) {
-            const opacity = (1 - distance / maxDistance) * 0.2;
-            ctx.beginPath();
-            ctx.strokeStyle = highlightColor;
-            ctx.globalAlpha = opacity;
-            ctx.lineWidth = 0.5;
-            ctx.moveTo(particles[i].x, particles[i].y);
-            ctx.lineTo(particles[j].x, particles[j].y);
-            ctx.stroke();
-            ctx.globalAlpha = 1;
+      const drawn = new Set<number>();
+      ctx.strokeStyle = highlightColor;
+      ctx.lineWidth = 0.5;
+
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        const cellX = Math.floor(p.x / cellSize);
+        const cellY = Math.floor(p.y / cellSize);
+
+        for (let dx = -1; dx <= 1; dx++) {
+          for (let dy = -1; dy <= 1; dy++) {
+            const neighborKey = (cellX + dx) * 73856093 ^ (cellY + dy) * 19349663;
+            const neighbors = grid.get(neighborKey);
+            if (!neighbors) continue;
+
+            for (let ni = 0; ni < neighbors.length; ni++) {
+              const j = neighbors[ni];
+              if (j <= i) continue;
+
+              const pairKey = i * particles.length + j;
+              if (drawn.has(pairKey)) continue;
+              drawn.add(pairKey);
+
+              const q = particles[j];
+              const ddx = p.x - q.x;
+              const ddy = p.y - q.y;
+              const distSq = ddx * ddx + ddy * ddy;
+
+              if (distSq < maxDistanceSq) {
+                const distance = Math.sqrt(distSq);
+                const opacity = (1 - distance / maxDistance) * 0.2;
+                ctx.beginPath();
+                ctx.globalAlpha = opacity;
+                ctx.moveTo(p.x, p.y);
+                ctx.lineTo(q.x, q.y);
+                ctx.stroke();
+              }
+            }
           }
         }
       }
+      ctx.globalAlpha = 1;
     },
     [highlightColor]
   );
 
-  // 动画循环
+  // 绘制环形波纹
+  const drawRipple = useCallback((
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    color: string
+  ) => {
+    const time = Date.now() * 0.002;
+    const rippleCount = 3;
+
+    for (let i = 0; i < rippleCount; i++) {
+      const radius = 50 + i * 30 + Math.sin(time + i) * 10;
+      const opacity = 0.3 - i * 0.1;
+
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.strokeStyle = color;
+      ctx.globalAlpha = Math.max(0, opacity);
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }, []);
+
+  // 动画循环 - 使用 ref 来避免循环依赖
+  const animateRef = useRef<() => void>(() => {});
+  
   const animate = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -365,32 +417,13 @@ export function ParticleBackground({
       }
     }
 
-    animationRef.current = requestAnimationFrame(animate);
-  }, [drawConnections, highlightColor, reducedMotion]);
+    animationRef.current = requestAnimationFrame(animateRef.current);
+  }, [drawConnections, drawRipple, highlightColor, reducedMotion]);
 
-  // 绘制环形波纹
-  const drawRipple = (
-    ctx: CanvasRenderingContext2D,
-    x: number,
-    y: number,
-    color: string
-  ) => {
-    const time = Date.now() * 0.002;
-    const rippleCount = 3;
-
-    for (let i = 0; i < rippleCount; i++) {
-      const radius = 50 + i * 30 + Math.sin(time + i) * 10;
-      const opacity = 0.3 - i * 0.1;
-
-      ctx.beginPath();
-      ctx.arc(x, y, radius, 0, Math.PI * 2);
-      ctx.strokeStyle = color;
-      ctx.globalAlpha = Math.max(0, opacity);
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    }
-    ctx.globalAlpha = 1;
-  };
+  // 更新 animateRef
+  useEffect(() => {
+    animateRef.current = animate;
+  }, [animate]);
 
   // 处理 Canvas 尺寸
   const handleResize = useCallback(() => {
@@ -405,6 +438,12 @@ export function ParticleBackground({
 
     initParticles(canvas.width, canvas.height);
   }, [initParticles]);
+
+  const resizeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debouncedResize = useCallback(() => {
+    if (resizeTimerRef.current) clearTimeout(resizeTimerRef.current);
+    resizeTimerRef.current = setTimeout(handleResize, 150);
+  }, [handleResize]);
 
   // 鼠标事件处理
   const handleMouseMove = useCallback((e: MouseEvent) => {
@@ -437,12 +476,12 @@ export function ParticleBackground({
     animate();
 
     // 事件监听
-    window.addEventListener("resize", handleResize);
+    window.addEventListener("resize", debouncedResize);
     canvas.addEventListener("mousemove", handleMouseMove);
     canvas.addEventListener("mouseleave", handleMouseLeave);
 
     return () => {
-      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("resize", debouncedResize);
       canvas.removeEventListener("mousemove", handleMouseMove);
       canvas.removeEventListener("mouseleave", handleMouseLeave);
       if (animationRef.current) {
@@ -456,6 +495,7 @@ export function ParticleBackground({
     glowPosition,
     animate,
     handleResize,
+    debouncedResize,
     handleMouseMove,
     handleMouseLeave,
   ]);

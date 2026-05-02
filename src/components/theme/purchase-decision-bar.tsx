@@ -65,19 +65,24 @@ export function PurchaseDecisionBar({
 
   // 滚动检测显示购买栏
   useEffect(() => {
+    let ticking = false;
     const handleScroll = () => {
-      const scrollY = window.scrollY;
-      const windowHeight = window.innerHeight;
-      const documentHeight = document.documentElement.scrollHeight;
-      
-      // 当滚动超过 300px 或接近底部时显示
-      const shouldShow = scrollY > 300 || scrollY + windowHeight > documentHeight - 500;
-      setIsVisible(shouldShow);
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const scrollY = window.scrollY;
+          const windowHeight = window.innerHeight;
+          const documentHeight = document.documentElement.scrollHeight;
+          const shouldShow = scrollY > 300 || scrollY + windowHeight > documentHeight - 500;
+          setIsVisible(shouldShow);
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
-    
+
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
